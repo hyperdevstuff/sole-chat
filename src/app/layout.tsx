@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/query-client";
+import { Providers } from "@/components/providers";
 
 const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -22,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${jetBrainsMono.variable} antialiased`}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

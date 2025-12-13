@@ -1,14 +1,20 @@
 "use client";
-import { Clipboard, ClipboardCheck } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import { DestructButton } from "@/components/destruct-button";
+import { useUsername } from "@/hooks/use-username";
+import { api } from "@/lib/client";
+import { useMutation } from "@tanstack/react-query";
+import { Clipboard, ClipboardCheck, SendIcon } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const Page = () => {
   const params = useParams();
+  const { username } = useUsername();
   const roomId = params.roomId as string;
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!copied) return;
@@ -16,6 +22,14 @@ const Page = () => {
     return () => clearTimeout(timer);
   }, [copied]);
 
+  const { mutate: sendMessage } = useMutation({
+    mutationFn: async ({ text }: { text: string }) => {
+      await api.messages.post(
+        { sender: username, text },
+        { query: { roomId } },
+      );
+    },
+  });
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -59,6 +73,33 @@ const Page = () => {
           />
         </div>
       </header>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"></div>
+      <div className="p-4 border-t border-neutral-800 bg-neutral-900/30 ">
+        <div className="flex gap-4 ">
+          <div className="flex-1 relative group text-wrap">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-pulse">
+              {">"}
+            </span>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && input.trim()) {
+                  //TODO: send message
+                  inputRef.current?.focus();
+                }
+              }}
+              placeholder="Type Message..."
+              type="text"
+              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-sm text-wrap"
+            />
+          </div>
+          <button className="bg-neutral-800 px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ">
+            <SendIcon width={18}></SendIcon>
+          </button>
+        </div>
+      </div>
     </main>
   );
 };

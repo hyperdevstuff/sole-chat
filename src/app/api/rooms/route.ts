@@ -8,7 +8,6 @@ export const rooms = new Elysia({ prefix: "/rooms" }).post(
   async () => {
     const roomId = nanoid();
     await redis.hset(`meta:${roomId}`, {
-      connected: [],
       createdAt: Date.now(),
     });
     await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);

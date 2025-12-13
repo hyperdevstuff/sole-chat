@@ -2,10 +2,12 @@ import { Elysia, NotFoundError } from "elysia";
 import { APIError } from "@/lib/api-error";
 import { notFound } from "next/navigation";
 import { rooms } from "../rooms/route";
+import { messages } from "../messages/route";
 
 const App = new Elysia({ prefix: "/api" })
   .get("/", () => "Hello from Elysia!")
   .use(rooms)
+  .use(messages)
   .onError(({ error, set }) => {
     if (error instanceof APIError) {
       set.status = error.status;
