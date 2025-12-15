@@ -8,15 +8,17 @@ export const proxy = async (req: NextRequest) => {
   if (!roomMatch) return NextResponse.redirect(new URL("/", req.url));
   const roomId = roomMatch[1];
   console.log(roomId);
-  const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(
-    `meta:${roomId}`,
-  );
+  const meta = await redis.hgetall<{ createdAt: number }>(`meta:${roomId}`);
   if (!meta)
     return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
 
   const existingToken = req.cookies.get("x-auth-token")?.value;
-  if (existingToken && meta.connected.includes(existingToken)) {
-    return NextResponse.next();
+  if (existingToken) {
+    const isMember = await redis.sismember(
+      `connected:${roomId}`,
+      existingToken,
+    );
+    if (isMember) return NextResponse.next();
   }
   const userCount = await redis.scard(`connected:${roomId}`);
   if (userCount >= 2) {
@@ -31,12 +33,26 @@ export const proxy = async (req: NextRequest) => {
     sameSite: "strict",
   });
 
-  await redis.sadd(`connected:${roomId}`, token);
+  const joined = await redis.eval(
+    `
+    local count = redis.call('SCARD', KEYS[1])
+    if count >= 2 then
+      return 0
+    end
+    redis.call('SADD', KEYS[1], ARGV[1])
+    return 1
+    `,
+    [`connected:${roomId}`],
+    [token],
+  );
+
+  if (!joined) return NextResponse.redirect(new URL("/?error=room-full"));
+
   const ttl = await redis.ttl(`meta:${roomId}`);
   await redis.expire(`connected:${roomId}`, ttl);
   return response;
 };
 
 export const config = {
-  matcher: "/rooms/:path*",
+  matcher: "/room/:path*",
 };

@@ -28,8 +28,8 @@ export const messages = new Elysia({ prefix: "/messages" })
       await realtime.channel(roomId).emit("chat.message", message);
       const remaining = await redis.ttl(`meta:${roomId}`);
       await redis.expire(`messages:${roomId}`, remaining);
-      await redis.expire(`history:${roomId}`, remaining);
-      await redis.expire(roomId, remaining);
+      // await redis.expire(`history:${roomId}`, remaining);
+      // await redis.expire(roomId, remaining);
     },
     {
       query: t.Object({

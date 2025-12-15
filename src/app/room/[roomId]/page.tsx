@@ -30,6 +30,7 @@ const Page = () => {
       );
     },
   });
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -86,7 +87,8 @@ const Page = () => {
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter" && input.trim()) {
-                  //TODO: send message
+                  sendMessage({ text: input });
+                  setInput("");
                   inputRef.current?.focus();
                 }
               }}
@@ -95,7 +97,16 @@ const Page = () => {
               className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-sm text-wrap"
             />
           </div>
-          <button className="bg-neutral-800 px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ">
+          <button
+            onClick={() => {
+              if (input.trim()) {
+                sendMessage({ text: input });
+                setInput("");
+              }
+            }}
+            disabled={!input.trim()}
+            className="bg-neutral-800 px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer "
+          >
             <SendIcon width={18}></SendIcon>
           </button>
         </div>
