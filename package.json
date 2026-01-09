@@ -9,9 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@upstash/realtime": "^1.0.0",
+    "@upstash/redis": "^1.36.1",
     "next": "16.0.8",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
