@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 
-export type ToastType = "error" | "success" | "info";
+export type ToastType = "error" | "success" | "info" | "warning";
 
 export interface ToastProps {
   id: string;
@@ -17,18 +17,21 @@ const icons = {
   error: <AlertCircle className="w-5 h-5" />,
   success: <CheckCircle className="w-5 h-5" />,
   info: <Info className="w-5 h-5" />,
+  warning: <AlertTriangle className="w-5 h-5" />,
 };
 
 const styles = {
   error: "border-red-500/20 bg-red-500/5 text-red-500",
   success: "border-emerald-500/20 bg-emerald-500/5 text-emerald-500",
   info: "border-blue-500/20 bg-blue-500/5 text-blue-500",
+  warning: "border-amber-500/20 bg-amber-500/5 text-amber-500",
 };
 
 const progressStyles = {
   error: "bg-red-500",
   success: "bg-emerald-500",
   info: "bg-blue-500",
+  warning: "bg-amber-500",
 };
 
 export function Toast({

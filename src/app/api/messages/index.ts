@@ -45,11 +45,14 @@ export const messages = new Elysia({ prefix: "/messages" })
     "/",
     async ({ auth }) => {
       const { roomId } = auth;
-      const rawMessages = await redis.lrange(`messages:${roomId}`, 0, -1);
+      const [rawMessages, ttl] = await Promise.all([
+        redis.lrange(`messages:${roomId}`, 0, -1),
+        redis.ttl(`meta:${roomId}`),
+      ]);
       const messages: Message[] = rawMessages.map((msg) =>
         typeof msg === "string" ? JSON.parse(msg) : msg
       );
-      return messages;
+      return { messages, ttl: ttl > 0 ? ttl : 0 };
     },
     {
       query: t.Object({

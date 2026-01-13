@@ -54,7 +54,7 @@
   - Display system message in chat: "anon-xyz joined" (centered, muted, no bubble)
   - Acceptance: System message appears when second user joins
 
-- [ ] **Timestamp Below Bubble** (file: `src/app/room/[roomId]/page.tsx`)
+- [x] **Timestamp Below Bubble** (commit: 772c594)
   - Move timestamp from sender line to below message content
   - Align: right for own messages, left for other's
   - Style: text-xs, muted color

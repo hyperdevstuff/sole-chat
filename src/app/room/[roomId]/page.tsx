@@ -35,18 +35,20 @@ const Page = () => {
   const [now, setNow] = useState(Date.now());
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [systemMessages, setSystemMessages] = useState<{ id: string; text: string; timestamp: number }[]>([]);
+  const [warned60, setWarned60] = useState(false);
+  const [warned10, setWarned10] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch initial message history
-  const { data: historyMessages = [] } = useQuery({
+  const { data: historyData } = useQuery({
     queryKey: ["messages", roomId],
     queryFn: async () => {
       const res = await api.messages.get({ query: { roomId } });
       if (res.error) throw res.error;
-      return res.data as Message[];
+      return res.data as { messages: Message[]; ttl: number };
     },
     staleTime: Infinity,
     retry: 2,
@@ -54,6 +56,37 @@ const Page = () => {
       onError: () => toast({ message: "Failed to load message history.", type: "error" }),
     },
   });
+
+  const historyMessages = historyData?.messages ?? [];
+
+  // Initialize timeRemaining from TTL
+  useEffect(() => {
+    if (historyData?.ttl !== undefined && timeRemaining === null) {
+      setTimeRemaining(historyData.ttl);
+    }
+  }, [historyData?.ttl, timeRemaining]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeRemaining]);
+
+  // Warning toasts
+  useEffect(() => {
+    if (timeRemaining === null) return;
+    if (timeRemaining <= 60 && timeRemaining > 10 && !warned60) {
+      setWarned60(true);
+      toast({ message: "Room expires in 1 minute", type: "warning" });
+    }
+    if (timeRemaining <= 10 && !warned10) {
+      setWarned10(true);
+      toast({ message: "Room expires in 10 seconds!", type: "error" });
+    }
+  }, [timeRemaining, warned60, warned10, toast]);
 
   // Merge history with realtime messages (deduplicated by id)
   const messages = [...historyMessages, ...realtimeMessages].filter(
