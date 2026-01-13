@@ -28,6 +28,7 @@
 
 ## Priority 2: Essential UX
 
+### Completed
 - [x] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
   - Show relative time (e.g., "now", "2m")
   - **Tool:** `frontend-ui-ux-engineer`
@@ -46,19 +47,72 @@
   - **Tool:** `frontend-ui-ux-engineer`
   - Acceptance: Toast appears on error
 
+### New Items
+- [ ] **User Connected System Message** (files: `src/lib/realtime.ts`, `src/proxy.ts`, `src/app/room/[roomId]/page.tsx`)
+  - Add `chat.join` event to Zod schema: `{ type: "chat.join", sender: string }`
+  - Emit `chat.join` in `proxy.ts` after successful room join
+  - Display system message in chat: "anon-xyz joined" (centered, muted, no bubble)
+  - Acceptance: System message appears when second user joins
+
+- [ ] **Timestamp Below Bubble** (file: `src/app/room/[roomId]/page.tsx`)
+  - Move timestamp from sender line to below message content
+  - Align: right for own messages, left for other's
+  - Style: text-xs, muted color
+  - **Tool:** `frontend-ui-ux-engineer`
+  - Acceptance: Timestamp renders below bubble, not in sender line
+
+- [ ] **Destruction Warnings** (files: `src/app/api/messages/index.ts`, `src/app/room/[roomId]/page.tsx`)
+  - Backend: GET `/messages` returns `{ messages, ttl: number }` (Redis TTL on `meta:{roomId}`)
+  - Frontend: Track `timeRemaining` state, decrement with `setInterval`
+  - Toast at <60s: "Room expires in 1 minute" with Keep Alive action
+  - Toast at <10s: "Room expires in 10 seconds!" with Keep Alive action
+  - Acceptance: Warning toasts appear at correct thresholds
+
+- [ ] **Keep Alive** (files: `src/app/api/rooms/index.ts`, `src/app/room/[roomId]/page.tsx`)
+  - Backend: Add `PATCH /rooms/:roomId` to extend TTL by 10 min
+    - Track total session age (createdAt in meta)
+    - Reject if total would exceed 7 days
+    - Return new TTL
+  - Frontend: Keep Alive button in warning toast
+  - On success: reset timer, show "Extended by 10 minutes"
+  - On max reached: show "Maximum session length (7 days) reached"
+  - Acceptance: TTL extends on click, caps at 7 days
+
+- [ ] **Export on Destruct** (file: `src/app/room/[roomId]/page.tsx`)
+  - Destruct button opens confirmation modal with two options:
+    - [Export & Destroy]: Downloads chat as .txt, then destroys
+    - [Just Destroy]: Destroys immediately
+  - Export format (plain text):
+    ```
+    SOLE-CHAT Export
+    Room: {roomId}
+    Exported: {date}
+    ---
+    [12:34] anon-happy-x7k2: Hello!
+    [12:35] anon-swift-p9m1: Hey there
+    [12:35] --- anon-swift-p9m1 joined ---
+    ```
+  - Use Blob + URL.createObjectURL for download
+  - **Tool:** `frontend-ui-ux-engineer` (for modal UI)
+  - Acceptance: Export downloads valid .txt file before destruction
+
 ## Priority 3: Polish & Nice to Have
 
 - [ ] **Improve Mobile Responsiveness**
-  - Check input field on mobile (virtual keyboard handling)
+  - Use `dvh` units for mobile viewport (iOS Safari address bar)
+  - Add `safe-area-inset` for notched devices
+  - Virtual keyboard detection via `visualViewport` API
   - **Tool:** `frontend-ui-ux-engineer`
 
 - [ ] **Connection Status Indicator**
   - Show distinct visual for "Connecting...", "Connected", "Disconnected"
+  - Research Upstash Realtime client for connection state exposure
   - **Tool:** `frontend-ui-ux-engineer`
 
 - [ ] **Sound Effects**
   - Simple "pop" sound on new message
-  - Toggle in UI
+  - Toggle in UI (localStorage preference)
+  - Only play when tab is backgrounded (optional)
 
 ## Completed
 - [x] Basic Project Setup (Next.js, Elysia, Upstash)
@@ -71,7 +125,9 @@
 None
 
 ## Notes
-- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`, `chat.typing`. Channel is `chat:{roomId}`.
+- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`, `chat.typing`, `chat.join`. Channel is `chat:{roomId}`.
 - **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
 - **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
 - **Toast:** Custom toast system in `src/components/toast.tsx` + `src/hooks/use-toast.tsx`.
+- **TTL:** Room default is 10 min, can extend via keep-alive, max total 7 days.
+- **Export:** Plain text format, triggered only on destruct confirmation.
