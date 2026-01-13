@@ -34,7 +34,9 @@ const Page = () => {
   const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
   const [now, setNow] = useState(Date.now());
   const [typingUser, setTypingUser] = useState<string | null>(null);
+  const [systemMessages, setSystemMessages] = useState<{ id: string; text: string; timestamp: number }[]>([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasEmittedJoin = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,8 +62,8 @@ const Page = () => {
 
   const handleRealtimeData = useCallback(
     (payload: {
-      event: "chat.message" | "chat.destroy" | "chat.typing";
-      data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean };
+      event: "chat.message" | "chat.destroy" | "chat.typing" | "chat.join";
+      data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean } | { username: string; timestamp: number };
       channel: string;
     }) => {
       if (payload.event === "chat.message") {
@@ -73,6 +75,14 @@ const Page = () => {
         if (typingData.sender !== username) {
           setTypingUser(typingData.isTyping ? typingData.sender : null);
         }
+      } else if (payload.event === "chat.join") {
+        const joinData = payload.data as { username: string; timestamp: number };
+        if (joinData.username !== username) {
+          setSystemMessages((prev) => [
+            ...prev,
+            { id: `join-${joinData.timestamp}`, text: `${joinData.username} joined`, timestamp: joinData.timestamp },
+          ]);
+        }
       }
     },
     [router, username],
@@ -80,7 +90,7 @@ const Page = () => {
 
   useRealtime({
     channels: [`chat:${roomId}`],
-    events: ["chat.message", "chat.destroy", "chat.typing"],
+    events: ["chat.message", "chat.destroy", "chat.typing", "chat.join"],
     onData: handleRealtimeData,
   });
 
@@ -91,7 +101,22 @@ const Page = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, systemMessages]);
+
+  useEffect(() => {
+    if (hasEmittedJoin.current || !username) return;
+    hasEmittedJoin.current = true;
+    
+    fetch("/api/realtime", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel: `chat:${roomId}`,
+        event: "chat.join",
+        data: { username, timestamp: Date.now() },
+      }),
+    }).catch(() => {});
+  }, [roomId, username]);
 
   useEffect(() => {
     if (!copied) return;
@@ -195,26 +220,35 @@ const Page = () => {
         </div>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex flex-col ${msg.sender === username ? "items-end" : "items-start"}`}
-          >
-            <span className="text-xs text-neutral-500 mb-1">
-              {msg.sender}
-              <span className="ml-2 opacity-75">{formatRelativeTime(msg.timeStamp, now)}</span>
-            </span>
-            <div
-              className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
-                msg.sender === username
-                  ? "bg-green-600/20 text-green-100 border border-green-700/30"
-                  : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
-              }`}
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
+        {[...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timeStamp })),
+          ...systemMessages.map(s => ({ type: 'system' as const, data: s, timestamp: s.timestamp }))]
+          .sort((a, b) => a.timestamp - b.timestamp)
+          .map((item) => 
+            item.type === 'system' ? (
+              <div key={item.data.id} className="flex justify-center">
+                <span className="text-xs text-neutral-500 italic">{item.data.text}</span>
+              </div>
+            ) : (
+              <div
+                key={item.data.id}
+                className={`flex flex-col ${item.data.sender === username ? "items-end" : "items-start"}`}
+              >
+                <span className="text-xs text-neutral-500 mb-1">
+                  {item.data.sender}
+                  <span className="ml-2 opacity-75">{formatRelativeTime(item.data.timeStamp, now)}</span>
+                </span>
+                <div
+                  className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
+                    item.data.sender === username
+                      ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                      : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
+                  }`}
+                >
+                  {item.data.text}
+                </div>
+              </div>
+            )
+          )}
         {typingUser && (
           <div className="flex items-start">
             <span className="text-xs text-neutral-500 italic animate-pulse">

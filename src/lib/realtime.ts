@@ -20,6 +20,10 @@ const schema = {
       sender: z.string(),
       isTyping: z.boolean(),
     }),
+    join: z.object({
+      username: z.string(),
+      timestamp: z.number(),
+    }),
   },
 };
 
