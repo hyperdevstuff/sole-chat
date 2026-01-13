@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useUsername } from "@/hooks/use-username";
 import { api } from "@/lib/client";
 import { useMutation } from "@tanstack/react-query";
@@ -8,6 +9,8 @@ import { useRouter } from "next/navigation";
 function App() {
   const { username } = useUsername();
   const router = useRouter();
+  const [roomId, setRoomId] = useState("");
+
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
       const res = await api.rooms.create.post();
@@ -16,6 +19,20 @@ function App() {
       }
     },
   });
+
+  const handleJoin = () => {
+    if (!roomId.trim()) return;
+    // Extract room ID from URL if user pastes full URL
+    let id = roomId.trim();
+    try {
+      const url = new URL(id);
+      const match = url.pathname.match(/\/room\/([^/]+)/);
+      if (match) id = match[1];
+    } catch {
+      // Not a URL, use as-is
+    }
+    router.push(`/room/${id}`);
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -46,6 +63,34 @@ function App() {
             >
               CREATE SECURE ROOM
             </button>
+
+            <div className="flex items-center gap-4 py-2">
+              <div className="h-px flex-1 bg-neutral-800" />
+              <span className="text-xs uppercase text-neutral-600">
+                or join existing
+              </span>
+              <div className="h-px flex-1 bg-neutral-800" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Paste Room ID"
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                  className="flex-1 bg-neutral-950 border border-neutral-800 p-3 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-green-500/50 transition-colors font-mono"
+                />
+                <button
+                  onClick={handleJoin}
+                  disabled={!roomId.trim()}
+                  className="px-6 border border-neutral-800 bg-transparent text-green-500 text-sm font-bold hover:bg-green-500/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  JOIN
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

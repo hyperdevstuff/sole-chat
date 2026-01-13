@@ -40,16 +40,19 @@ src/
 ## CONVENTIONS
 
 ### API Pattern (NON-STANDARD)
+
 - Uses **Elysia** via catch-all route, NOT Next.js API routes
 - New endpoints: create Elysia plugin, mount in `[[...slugs]]/route.ts`
 - Client calls via Eden treaty (`src/lib/client.ts`)
 
 ### Realtime
+
 - Upstash Realtime, NOT raw WebSocket
 - Events defined with Zod in `src/lib/realtime.ts`
 - Channel per room: `chat:{roomId}`
 
 ### Room Mechanics
+
 - 10-minute TTL on creation, synced on each message
 - Max 2 users per room (atomic Lua script in `proxy.ts`)
 - Auth token set via `x-auth-token` cookie on join
@@ -70,7 +73,7 @@ src/
 
 ```bash
 bun dev          # Development server
-bun build        # Production build
+bun run build        # Production build
 bun start        # Start production
 ```
 

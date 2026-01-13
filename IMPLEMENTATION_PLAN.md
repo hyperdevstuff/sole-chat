@@ -5,7 +5,7 @@
 
 ## Priority 1: Core Chat Implementation (Critical Path)
 
-- [ ] **Add Message History API** (file: `src/app/api/messages/route.ts`)
+- [x] **Add Message History API** (file: `src/app/api/messages/index.ts`)
   - Add `GET` handler to fetch messages from Redis list `messages:{roomId}`
   - Ensure it validates room access via auth token
   - Acceptance: `curl` request returns JSON array of messages

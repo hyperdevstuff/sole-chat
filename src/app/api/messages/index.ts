@@ -25,7 +25,7 @@ export const messages = new Elysia({ prefix: "/messages" })
         ...message,
         token: auth.token,
       });
-      await realtime.channel(roomId).emit("chat.message", message);
+      await realtime.channel(`chat:${roomId}`).emit("chat.message", message);
       const remaining = await redis.ttl(`meta:${roomId}`);
       await redis.expire(`messages:${roomId}`, remaining);
       // await redis.expire(`history:${roomId}`, remaining);
@@ -38,6 +38,19 @@ export const messages = new Elysia({ prefix: "/messages" })
       body: t.Object({
         sender: t.String({ maxLength: 100 }),
         text: t.String({ maxLength: 1000 }),
+      }),
+    },
+  )
+  .get(
+    "/",
+    async ({ auth }) => {
+      const { roomId } = auth;
+      const messages = await redis.lrange(`messages:${roomId}`, 0, -1);
+      return messages;
+    },
+    {
+      query: t.Object({
+        roomId: t.String(),
       }),
     },
   );

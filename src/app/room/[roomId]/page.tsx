@@ -2,19 +2,49 @@
 import { DestructButton } from "@/components/destruct-button";
 import { useUsername } from "@/hooks/use-username";
 import { api } from "@/lib/client";
+import { useRealtime } from "@/lib/realtime-client";
+import type { Message, RealtimeEvents } from "@/lib/realtime";
 import { useMutation } from "@tanstack/react-query";
 import { Clipboard, ClipboardCheck, SendIcon } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const Page = () => {
   const params = useParams();
+  const router = useRouter();
   const { username } = useUsername();
   const roomId = params.roomId as string;
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleRealtimeData = useCallback(
+    (payload: {
+      event: "chat.message" | "chat.destroy";
+      data: Message | { isDestroyed: true };
+      channel: string;
+    }) => {
+      if (payload.event === "chat.message") {
+        setMessages((prev) => [...prev, payload.data as Message]);
+      } else if (payload.event === "chat.destroy") {
+        router.push("/");
+      }
+    },
+    [router],
+  );
+
+  useRealtime({
+    channels: [`chat:${roomId}`],
+    events: ["chat.message", "chat.destroy"],
+    onData: handleRealtimeData,
+  });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (!copied) return;
@@ -40,8 +70,17 @@ const Page = () => {
     }
   };
 
+  const { mutate: destroyRoom } = useMutation({
+    mutationFn: async () => {
+      await api.rooms({ roomId }).delete();
+    },
+    onSuccess: () => {
+      router.push("/");
+    },
+  });
+
   const handleDestroy = () => {
-    console.log("room destroyed");
+    destroyRoom();
   };
 
   return (
@@ -74,7 +113,26 @@ const Page = () => {
           />
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"></div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex flex-col ${msg.sender === username ? "items-end" : "items-start"}`}
+          >
+            <span className="text-xs text-neutral-500 mb-1">{msg.sender}</span>
+            <div
+              className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
+                msg.sender === username
+                  ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                  : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
+              }`}
+            >
+              {msg.text}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
       <div className="p-4 border-t border-neutral-800 bg-neutral-900/30 ">
         <div className="flex gap-4 ">
           <div className="flex-1 relative group text-wrap">
