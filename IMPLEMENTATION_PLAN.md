@@ -61,7 +61,7 @@
   - **Tool:** `frontend-ui-ux-engineer`
   - Acceptance: Timestamp renders below bubble, not in sender line
 
-- [ ] **Destruction Warnings** (files: `src/app/api/messages/index.ts`, `src/app/room/[roomId]/page.tsx`)
+- [x] **Destruction Warnings** (commit: 487981c)
   - Backend: GET `/messages` returns `{ messages, ttl: number }` (Redis TTL on `meta:{roomId}`)
   - Frontend: Track `timeRemaining` state, decrement with `setInterval`
   - Toast at <60s: "Room expires in 1 minute" with Keep Alive action

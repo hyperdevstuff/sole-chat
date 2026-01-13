@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { authMiddleware } from "../[[...slugs]]/auth";
 
 const ROOM_TTL_SECONDS: number = 60 * 10; // 10 mins
+const MAX_SESSION_AGE_SECONDS: number = 60 * 60 * 24 * 7; // 7 days
 
 export const rooms = new Elysia({ prefix: "/rooms" })
   .post("/create", async () => {
@@ -16,6 +17,50 @@ export const rooms = new Elysia({ prefix: "/rooms" })
     return { roomId };
   })
   .use(authMiddleware)
+  .patch(
+    "/:roomId",
+    async ({ params, auth }) => {
+      const { roomId } = params;
+      if (auth.roomId !== roomId) throw new Error("Unauthorized");
+
+      const meta = await redis.hgetall<{ createdAt: string }>(`meta:${roomId}`);
+      if (!meta) throw new Error("Room not found");
+
+      const createdAt = parseInt(meta.createdAt, 10);
+      const now = Date.now();
+      const ageSeconds = Math.floor((now - createdAt) / 1000);
+      const currentTtl = await redis.ttl(`meta:${roomId}`);
+      const newTtl = currentTtl + ROOM_TTL_SECONDS;
+      const projectedTotalAge = ageSeconds + newTtl;
+
+      if (projectedTotalAge > MAX_SESSION_AGE_SECONDS) {
+        return {
+          success: false,
+          error: "max_reached",
+          message: "Maximum session length (7 days) reached",
+          ttl: currentTtl,
+        };
+      }
+
+      // Extend TTL on all room keys
+      await Promise.all([
+        redis.expire(`meta:${roomId}`, newTtl),
+        redis.expire(`messages:${roomId}`, newTtl),
+        redis.expire(`connected:${roomId}`, newTtl),
+      ]);
+
+      return {
+        success: true,
+        ttl: newTtl,
+        message: "Extended by 10 minutes",
+      };
+    },
+    {
+      params: t.Object({
+        roomId: t.String(),
+      }),
+    },
+  )
   .delete(
     "/:roomId",
     async ({ params, auth }) => {

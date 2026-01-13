@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, ReactNode } from "rea
 import { Toast, ToastType } from "@/components/toast";
 
 interface ToastContextType {
-  toast: (props: { message: string; type: ToastType; duration?: number }) => void;
+  toast: (props: { message: string; type: ToastType; duration?: number; action?: { label: string; onClick: () => void } }) => void;
   dismiss: (id: string) => void;
 }
 
@@ -12,13 +12,13 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<
-    Array<{ id: string; message: string; type: ToastType; duration?: number }>
+    Array<{ id: string; message: string; type: ToastType; duration?: number; action?: { label: string; onClick: () => void } }>
   >([]);
 
   const addToast = useCallback(
-    ({ message, type, duration }: { message: string; type: ToastType; duration?: number }) => {
+    ({ message, type, duration, action }: { message: string; type: ToastType; duration?: number; action?: { label: string; onClick: () => void } }) => {
       const id = Math.random().toString(36).substring(2, 9);
-      setToasts((prev) => [...prev, { id, message, type, duration }]);
+      setToasts((prev) => [...prev, { id, message, type, duration, action }]);
     },
     []
   );

@@ -10,6 +10,10 @@ export interface ToastProps {
   message: string;
   type: ToastType;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
   onDismiss: (id: string) => void;
 }
 
@@ -39,6 +43,7 @@ export function Toast({
   message,
   type,
   duration = 4000,
+  action,
   onDismiss,
 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -101,6 +106,17 @@ export function Toast({
         <p className="mt-1 text-sm text-neutral-400 leading-relaxed">
           {message}
         </p>
+        {action && (
+          <button
+            onClick={() => {
+              action.onClick();
+              handleDismiss();
+            }}
+            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-colors"
+          >
+            {action.label}
+          </button>
+        )}
       </div>
 
       <button

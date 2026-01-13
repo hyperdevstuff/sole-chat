@@ -37,6 +37,7 @@ const Page = () => {
   const [systemMessages, setSystemMessages] = useState<{ id: string; text: string; timestamp: number }[]>([]);
   const [warned60, setWarned60] = useState(false);
   const [warned10, setWarned10] = useState(false);
+  const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +60,35 @@ const Page = () => {
 
   const historyMessages = historyData?.messages ?? [];
 
+  const { mutate: keepAlive } = useMutation({
+    mutationFn: async () => {
+      const res = await api.rooms({ roomId }).patch();
+      if (res.error) throw res.error;
+      return res.data as { success: boolean; ttl: number; message: string; error?: string };
+    },
+    onSuccess: (data) => {
+      keepAliveInProgressRef.current = false;
+      if (data.success) {
+        setTimeRemaining(data.ttl);
+        setWarned60(false);
+        setWarned10(false);
+        toast({ message: data.message, type: "success" });
+      } else {
+        toast({ message: data.message, type: "error" });
+      }
+    },
+    onError: () => {
+      keepAliveInProgressRef.current = false;
+      toast({ message: "Failed to extend room.", type: "error" });
+    },
+  });
+
+  const handleKeepAlive = useCallback(() => {
+    if (keepAliveInProgressRef.current) return;
+    keepAliveInProgressRef.current = true;
+    keepAlive();
+  }, [keepAlive]);
+
   // Initialize timeRemaining from TTL
   useEffect(() => {
     if (historyData?.ttl !== undefined && timeRemaining === null) {
@@ -80,13 +110,21 @@ const Page = () => {
     if (timeRemaining === null) return;
     if (timeRemaining <= 60 && timeRemaining > 10 && !warned60) {
       setWarned60(true);
-      toast({ message: "Room expires in 1 minute", type: "warning" });
+      toast({ 
+        message: "Room expires in 1 minute", 
+        type: "warning",
+        action: { label: "Keep Alive", onClick: handleKeepAlive },
+      });
     }
     if (timeRemaining <= 10 && !warned10) {
       setWarned10(true);
-      toast({ message: "Room expires in 10 seconds!", type: "error" });
+      toast({ 
+        message: "Room expires in 10 seconds!", 
+        type: "error",
+        action: { label: "Keep Alive", onClick: handleKeepAlive },
+      });
     }
-  }, [timeRemaining, warned60, warned10, toast]);
+  }, [timeRemaining, warned60, warned10, toast, handleKeepAlive]);
 
   // Merge history with realtime messages (deduplicated by id)
   const messages = [...historyMessages, ...realtimeMessages].filter(
