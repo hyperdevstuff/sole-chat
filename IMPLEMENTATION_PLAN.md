@@ -1,135 +1,125 @@
 # Implementation Plan
 
-**Last Updated:** 2026-01-13
-**Branch:** dev
+## Priority 1: Edge Case Handling
 
-## Priority 1: Core Chat Implementation (Critical Path)
+### 1.1 Add `chat.leave` event to realtime schema
+- [ ] Update `src/lib/realtime.ts`
+  - Add `leave` event schema: `{ username: string, timestamp: number }`
+  - Acceptance: Event type available in `RealtimeEvents`
 
-- [x] **Add Message History API** (file: `src/app/api/messages/index.ts`)
-  - Add `GET` handler to fetch messages from Redis list `messages:{roomId}`
-  - Ensure it validates room access via auth token
-  - Acceptance: `curl` request returns JSON array of messages
+### 1.2 Handle `chat.leave` in room page
+- [ ] Update `src/app/room/[roomId]/page.tsx`
+  - Add `chat.leave` to `events` array in `useRealtime`
+  - Handle in `handleRealtimeData`: show "X left" system message
+  - Acceptance: When leave event received, shows italicized system message
 
-- [x] **Implement Chat Frontend Logic** (file: `src/app/room/[roomId]/page.tsx`)
-  - [x] Use `useRealtime` hook to subscribe to `chat:{roomId}`
-  - [x] Handle `chat.message` events to update local state
-  - [x] Fetch initial history on mount (using TanStack Query)
-  - Acceptance: Sending a message updates the UI immediately; refreshing preserves history
+### 1.3 Client-side join message deduplication
+- [ ] Update `src/app/room/[roomId]/page.tsx`
+  - In `chat.join` handler, check if username already has a join message in `systemMessages`
+  - Only add "X joined" if not already present for that username
+  - Acceptance: User exits and rejoins -> no duplicate "joined" message
 
-- [x] **Implement Message List UI** (file: `src/app/room/[roomId]/page.tsx`)
-  - Inline MessageBubble with sender-based alignment
-  - Auto-scroll to bottom via `scrollIntoView`
-  - **Tool:** `frontend-ui-ux-engineer` (MANDATORY)
-  - Acceptance: Messages render correctly with visual distinction
+### 1.4 Add `beforeunload` leave emission
+- [ ] Update `src/app/room/[roomId]/page.tsx`
+  - Add `useEffect` with `beforeunload` event listener
+  - Use `navigator.sendBeacon` to POST leave event (more reliable than fetch on unload)
+  - Cleanup listener on unmount
+  - Acceptance: Closing tab sends leave event to other user
 
-- [x] **Verify Core Chat Flow E2E** (Tool: Playwriter)
-  - Create room -> join from second tab -> send messages -> verify sync
-  - Acceptance: Messages appear in both tabs within 100ms
+### 1.5 Create leave API endpoint
+- [ ] Create Elysia plugin in `src/app/api/[[...slugs]]/`
+  - POST `/api/rooms/:roomId/leave`
+  - Extract token from `x-auth-token` cookie
+  - Lua script: SREM from `connected:{roomId}`, SADD to `leaving:{roomId}` with 30s TTL
+  - Emit `chat.leave` via realtime
+  - Return success
+  - Acceptance: Token moved to grace set, leave event broadcast
 
-## Priority 2: Essential UX
+### 1.6 Update proxy.ts for grace period rejoin
+- [ ] Update `src/proxy.ts`
+  - After checking `connected:{roomId}`, also check `leaving:{roomId}`
+  - If token found in leaving set: SMOVE back to connected set
+  - This allows 30s grace window for rejoin
+  - Acceptance: User who left within 30s can rejoin seamlessly
 
-### Completed
+### 1.7 Add Exit button (non-destructive leave)
+- [ ] Update `src/app/room/[roomId]/page.tsx` or create component
+  - Add "Exit" button in header (next to destruct button)
+  - onClick: call leave API, emit leave event, redirect to "/"
+  - Style: subtle, not destructive red
+  - Acceptance: User can leave room without destroying it
 
-- [x] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
-  - Show relative time (e.g., "now", "2m")
-  - **Tool:** `frontend-ui-ux-engineer`
-  - Acceptance: Timestamps visible and accurate
+### 1.8 Connection status indicator
+- [ ] Update `src/app/room/[roomId]/page.tsx`
+  - Destructure `status` from `useRealtime` return value
+  - Add `onStatusChange` callback for logging
+  - Show visual indicator in header when `status !== "connected"`
+    - "reconnecting" -> pulsing yellow dot
+    - "error" -> red dot with "Connection lost"
+  - Acceptance: Network interruption shows visual feedback
 
-- [x] **Add Typing Indicators** (files: `src/lib/realtime.ts`, `src/app/room/[roomId]/page.tsx`)
-  - Add `chat.typing` event to Zod schema
-  - Implement debounce logic for emitting typing events
-  - Show "User is typing..." in UI
-  - **Tool:** `frontend-ui-ux-engineer`
-  - Acceptance: Indicator appears when other user types
+### 1.9 Room expired modal (TTL = 0)
+- [ ] Create `src/components/expired-modal.tsx`
+  - Reuse styling from `destruct-modal.tsx`
+  - Props: `isOpen`, `onExport`, `onCreateNew`
+  - **Key differences from destruct-modal**:
+    - No `onClose` - modal is unclosable (no escape, no backdrop click)
+    - No "Just Destroy" - room is already dead
+    - No "Cancel" - no going back
+  - Buttons:
+    - "Export Chat" (green) -> downloads .txt, stays on modal
+    - "Create New Room" (neutral) -> navigates to "/"
+  - Title: "Room Expired"
+  - Message: "This room has expired. Export your chat or start fresh."
+  - Acceptance: Modal blocks all interaction, only two actions available
 
-- [x] **Improve Error Handling** (files: `src/components/toast.tsx`, `src/hooks/use-toast.tsx`, `page.tsx`)
-  - Implement Toast component
-  - Show errors for: Room full, Room expired, Network issues
-  - **Tool:** `frontend-ui-ux-engineer`
-  - Acceptance: Toast appears on error
+- [ ] Update `src/app/room/[roomId]/page.tsx`
+  - Add `showExpiredModal` state
+  - In countdown effect: when `timeRemaining` hits 0, set `showExpiredModal = true`
+  - Render `<ExpiredModal>` with handlers
+  - **Disable chat input** when expired (disable input + send button)
+  - Acceptance: At TTL 0, modal appears, chat becomes unusable
 
-### New Items
+## Priority 2: UI Polish (delegate to frontend-ui-ux-engineer)
 
-- [x] **User Connected System Message** (commit: 84762a8)
-  - Add `chat.join` event to Zod schema: `{ type: "chat.join", sender: string }`
-  - Emit `chat.join` from client on room mount
-  - Display system message in chat: "anon-xyz joined" (centered, muted, no bubble)
-  - Acceptance: System message appears when second user joins
-
-- [x] **Timestamp Below Bubble** (commit: 772c594)
-  - Move timestamp from sender line to below message content
-  - Align: right for own messages, left for other's
-  - Style: text-xs, muted color
-  - **Tool:** `frontend-ui-ux-engineer`
-  - Acceptance: Timestamp renders below bubble, not in sender line
-
-- [x] **Destruction Warnings** (commit: 487981c)
-  - Backend: GET `/messages` returns `{ messages, ttl: number }` (Redis TTL on `meta:{roomId}`)
-  - Frontend: Track `timeRemaining` state, decrement with `setInterval`
-  - Toast at <60s: "Room expires in 1 minute" with Keep Alive action
-  - Toast at <10s: "Room expires in 10 seconds!" with Keep Alive action
-  - Acceptance: Warning toasts appear at correct thresholds
-
-- [x] **Keep Alive** (commit: 5425f3d)
-  - Backend: Add `PATCH /rooms/:roomId` to extend TTL by 10 min
-    - Track total session age (createdAt in meta)
-    - Reject if total would exceed 7 days
-    - Return new TTL
-  - Frontend: Keep Alive button in warning toast
-  - On success: reset timer, show "Extended by 10 minutes"
-  - On max reached: show "Maximum session length (7 days) reached"
-  - Acceptance: TTL extends on click, caps at 7 days
-
-- [x] **Export on Destruct** (commit: 0af8b32)
-  - Destruct button opens confirmation modal with two options:
-    - [Export & Destroy]: Downloads chat as .txt, then destroys
-    - [Just Destroy]: Destroys immediately
-  - Export format (plain text):
-
-    ```
-    SOLE-CHAT Export
-    Room: {roomId}
-    Exported: {date}
-    ---
-    [12:34] anon-happy-x7k2: Hello!
-    [12:35] anon-swift-p9m1: Hey there
-    [12:35] --- anon-swift-p9m1 joined ---
-    ```
-
-  - Use Blob + URL.createObjectURL for download
-  - **Tool:** `frontend-ui-ux-engineer` (for modal UI)
-  - Acceptance: Export downloads valid .txt file before destruction
-
-## Priority 3: Polish & Nice to Have
-
-- [ ] **Improve Mobile Responsiveness**
-  - Use `dvh` units for mobile viewport (iOS Safari address bar)
-  - Add `safe-area-inset` for notched devices
-  - Virtual keyboard detection via `visualViewport` API
-  - **Tool:** `frontend-ui-ux-engineer`
-
-- [ ] **Connection Status Indicator**
-  - Show distinct visual for "Connecting...", "Connected", "Disconnected"
-  - Research Upstash Realtime client for connection state exposure
-  - **Tool:** `frontend-ui-ux-engineer`
+- [ ] Style connection status indicator
+- [ ] Style exit button to complement destruct button
+- [ ] Add subtle animation for leave system messages
 
 ## Completed
 
-- [x] Basic Project Setup (Next.js, Elysia, Upstash)
-- [x] Room Creation API & UI
-- [x] Room Joining Logic (Proxy middleware)
-- [x] Basic Message POST API (Backend only)
-- [x] Destruct Button UI
-
-## Blockers
-
-None
+- [x] Room creation/joining with 2-user limit
+- [x] Realtime messaging
+- [x] Hold-to-destroy pattern
+- [x] Anonymous usernames
+- [x] Join system messages
+- [x] Typing indicators
+- [x] TTL warnings with keep-alive
+- [x] Export on destruct
 
 ## Notes
 
-- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`, `chat.typing`, `chat.join`. Channel is `chat:{roomId}`.
-- **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
-- **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
-- **Toast:** Custom toast system in `src/components/toast.tsx` + `src/hooks/use-toast.tsx`.
-- **TTL:** Room default is 10 min, can extend via keep-alive, max total 7 days.
-- **Export:** Plain text format, triggered only on destruct confirmation.
+### Architecture Decisions
+- **`beforeunload` limitation**: Unreliable on mobile/crash, but covers 80% of cases
+- **Grace period**: 30s allows accidental refresh recovery without blocking new users indefinitely
+- **Client-side dedupe**: Simpler than server-side, solves UX issue directly
+- **No heartbeat**: Avoided complexity; connection status indicator provides awareness
+
+### Redis Key Structure
+- `connected:{roomId}` - SET of active auth tokens (max 2)
+- `leaving:{roomId}` - SET of tokens in grace period (30s TTL per token)
+- `meta:{roomId}` - HASH with room metadata
+
+### Event Flow: User Leaves
+1. User clicks Exit OR closes tab
+2. `beforeunload`/button triggers POST to `/api/rooms/:roomId/leave`
+3. Server: SREM token from `connected`, SADD to `leaving` with TTL
+4. Server: emit `chat.leave` event
+5. Other user: receives leave event, shows "X left" message
+
+### Event Flow: User Rejoins (within 30s)
+1. User navigates to room URL
+2. `proxy.ts`: token not in `connected` but found in `leaving`
+3. SMOVE token from `leaving` back to `connected`
+4. Page loads, `chat.join` emitted
+5. Client-side dedupe: "X joined" not shown again if already in systemMessages
