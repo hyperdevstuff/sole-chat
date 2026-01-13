@@ -235,7 +235,6 @@ const Page = () => {
               >
                 <span className="text-xs text-neutral-500 mb-1">
                   {item.data.sender}
-                  <span className="ml-2 opacity-75">{formatRelativeTime(item.data.timeStamp, now)}</span>
                 </span>
                 <div
                   className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
@@ -246,6 +245,9 @@ const Page = () => {
                 >
                   {item.data.text}
                 </div>
+                <span className="text-xs text-neutral-500 mt-1 opacity-75">
+                  {formatRelativeTime(item.data.timeStamp, now)}
+                </span>
               </div>
             )
           )}

@@ -48,9 +48,9 @@
   - Acceptance: Toast appears on error
 
 ### New Items
-- [ ] **User Connected System Message** (files: `src/lib/realtime.ts`, `src/proxy.ts`, `src/app/room/[roomId]/page.tsx`)
+- [x] **User Connected System Message** (commit: 84762a8)
   - Add `chat.join` event to Zod schema: `{ type: "chat.join", sender: string }`
-  - Emit `chat.join` in `proxy.ts` after successful room join
+  - Emit `chat.join` from client on room mount
   - Display system message in chat: "anon-xyz joined" (centered, muted, no bubble)
   - Acceptance: System message appears when second user joins
 
