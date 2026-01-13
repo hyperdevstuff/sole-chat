@@ -28,20 +28,20 @@
 
 ## Priority 2: Essential UX
 
-- [ ] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
+- [x] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
   - Show relative time (e.g., "now", "2m")
   - **Tool:** `frontend-ui-ux-engineer`
   - Acceptance: Timestamps visible and accurate
 
-- [ ] **Add Typing Indicators** (files: `src/lib/realtime.ts`, `src/app/room/[roomId]/page.tsx`)
+- [x] **Add Typing Indicators** (files: `src/lib/realtime.ts`, `src/app/room/[roomId]/page.tsx`)
   - Add `chat.typing` event to Zod schema
   - Implement debounce logic for emitting typing events
   - Show "User is typing..." in UI
   - **Tool:** `frontend-ui-ux-engineer`
   - Acceptance: Indicator appears when other user types
 
-- [ ] **Improve Error Handling** (files: `src/components/ui/toast.tsx`, `page.tsx`)
-  - Implement Toast component (or use library if available)
+- [x] **Improve Error Handling** (files: `src/components/toast.tsx`, `src/hooks/use-toast.tsx`, `page.tsx`)
+  - Implement Toast component
   - Show errors for: Room full, Room expired, Network issues
   - **Tool:** `frontend-ui-ux-engineer`
   - Acceptance: Toast appears on error
@@ -71,8 +71,7 @@
 None
 
 ## Notes
-- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`. Channel is `chat:{roomId}`.
-- **Missing Event:** `chat.typing` not yet in Zod schema (needed for typing indicators)
+- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`, `chat.typing`. Channel is `chat:{roomId}`.
 - **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
 - **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
-- **Messages have `timeStamp` field** but not rendered in UI yet.
+- **Toast:** Custom toast system in `src/components/toast.tsx` + `src/hooks/use-toast.tsx`.

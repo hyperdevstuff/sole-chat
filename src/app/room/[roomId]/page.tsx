@@ -1,6 +1,7 @@
 "use client";
 import { DestructButton } from "@/components/destruct-button";
 import { useUsername } from "@/hooks/use-username";
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message, RealtimeEvents } from "@/lib/realtime";
@@ -9,15 +10,31 @@ import { Clipboard, ClipboardCheck, SendIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const formatRelativeTime = (timestamp: number, now: number) => {
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  if (hours < 24) return `${hours}h`;
+  return `${days}d`;
+};
+
 const Page = () => {
   const params = useParams();
   const router = useRouter();
   const { username } = useUsername();
+  const { toast } = useToast();
   const roomId = params.roomId as string;
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
+  const [now, setNow] = useState(Date.now());
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +46,11 @@ const Page = () => {
       if (res.error) throw res.error;
       return res.data as Message[];
     },
-    staleTime: Infinity, // Don't refetch - realtime handles updates
+    staleTime: Infinity,
+    retry: 2,
+    meta: {
+      onError: () => toast({ message: "Failed to load message history.", type: "error" }),
+    },
   });
 
   // Merge history with realtime messages (deduplicated by id)
@@ -39,24 +60,34 @@ const Page = () => {
 
   const handleRealtimeData = useCallback(
     (payload: {
-      event: "chat.message" | "chat.destroy";
-      data: Message | { isDestroyed: true };
+      event: "chat.message" | "chat.destroy" | "chat.typing";
+      data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean };
       channel: string;
     }) => {
       if (payload.event === "chat.message") {
         setRealtimeMessages((prev) => [...prev, payload.data as Message]);
       } else if (payload.event === "chat.destroy") {
         router.push("/");
+      } else if (payload.event === "chat.typing") {
+        const typingData = payload.data as { sender: string; isTyping: boolean };
+        if (typingData.sender !== username) {
+          setTypingUser(typingData.isTyping ? typingData.sender : null);
+        }
       }
     },
-    [router],
+    [router, username],
   );
 
   useRealtime({
     channels: [`chat:${roomId}`],
-    events: ["chat.message", "chat.destroy"],
+    events: ["chat.message", "chat.destroy", "chat.typing"],
     onData: handleRealtimeData,
   });
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,12 +99,43 @@ const Page = () => {
     return () => clearTimeout(timer);
   }, [copied]);
 
+  const emitTyping = useCallback(
+    async (isTyping: boolean) => {
+      try {
+        await fetch("/api/realtime", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: `chat:${roomId}`,
+            event: "chat.typing",
+            data: { sender: username, isTyping },
+          }),
+        });
+      } catch {}
+    },
+    [roomId, username],
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (e.target.value.trim()) {
+      emitTyping(true);
+      typingTimeoutRef.current = setTimeout(() => emitTyping(false), 2000);
+    } else {
+      emitTyping(false);
+    }
+  };
+
   const { mutate: sendMessage } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
       await api.messages.post(
         { sender: username, text },
         { query: { roomId } },
       );
+    },
+    onError: () => {
+      toast({ message: "Failed to send message. Please try again.", type: "error" });
     },
   });
 
@@ -92,6 +154,9 @@ const Page = () => {
     },
     onSuccess: () => {
       router.push("/");
+    },
+    onError: () => {
+      toast({ message: "Failed to destroy room.", type: "error" });
     },
   });
 
@@ -135,7 +200,10 @@ const Page = () => {
             key={msg.id}
             className={`flex flex-col ${msg.sender === username ? "items-end" : "items-start"}`}
           >
-            <span className="text-xs text-neutral-500 mb-1">{msg.sender}</span>
+            <span className="text-xs text-neutral-500 mb-1">
+              {msg.sender}
+              <span className="ml-2 opacity-75">{formatRelativeTime(msg.timeStamp, now)}</span>
+            </span>
             <div
               className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${
                 msg.sender === username
@@ -147,6 +215,13 @@ const Page = () => {
             </div>
           </div>
         ))}
+        {typingUser && (
+          <div className="flex items-start">
+            <span className="text-xs text-neutral-500 italic animate-pulse">
+              {typingUser} is typing...
+            </span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
       <div className="p-4 border-t border-neutral-800 bg-neutral-900/30 ">
@@ -157,12 +232,13 @@ const Page = () => {
             </span>
             <input
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter" && input.trim()) {
                   sendMessage({ text: input });
                   setInput("");
+                  emitTyping(false);
                   inputRef.current?.focus();
                 }
               }}
@@ -176,6 +252,7 @@ const Page = () => {
               if (input.trim()) {
                 sendMessage({ text: input });
                 setInput("");
+                emitTyping(false);
               }
             }}
             disabled={!input.trim()}
