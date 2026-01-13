@@ -29,6 +29,7 @@
 ## Priority 2: Essential UX
 
 ### Completed
+
 - [x] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
   - Show relative time (e.g., "now", "2m")
   - **Tool:** `frontend-ui-ux-engineer`
@@ -48,6 +49,7 @@
   - Acceptance: Toast appears on error
 
 ### New Items
+
 - [x] **User Connected System Message** (commit: 84762a8)
   - Add `chat.join` event to Zod schema: `{ type: "chat.join", sender: string }`
   - Emit `chat.join` from client on room mount
@@ -78,11 +80,12 @@
   - On max reached: show "Maximum session length (7 days) reached"
   - Acceptance: TTL extends on click, caps at 7 days
 
-- [ ] **Export on Destruct** (file: `src/app/room/[roomId]/page.tsx`)
+- [x] **Export on Destruct** (commit: 0af8b32)
   - Destruct button opens confirmation modal with two options:
     - [Export & Destroy]: Downloads chat as .txt, then destroys
     - [Just Destroy]: Destroys immediately
   - Export format (plain text):
+
     ```
     SOLE-CHAT Export
     Room: {roomId}
@@ -92,6 +95,7 @@
     [12:35] anon-swift-p9m1: Hey there
     [12:35] --- anon-swift-p9m1 joined ---
     ```
+
   - Use Blob + URL.createObjectURL for download
   - **Tool:** `frontend-ui-ux-engineer` (for modal UI)
   - Acceptance: Export downloads valid .txt file before destruction
@@ -109,12 +113,8 @@
   - Research Upstash Realtime client for connection state exposure
   - **Tool:** `frontend-ui-ux-engineer`
 
-- [ ] **Sound Effects**
-  - Simple "pop" sound on new message
-  - Toggle in UI (localStorage preference)
-  - Only play when tab is backgrounded (optional)
-
 ## Completed
+
 - [x] Basic Project Setup (Next.js, Elysia, Upstash)
 - [x] Room Creation API & UI
 - [x] Room Joining Logic (Proxy middleware)
@@ -122,9 +122,11 @@
 - [x] Destruct Button UI
 
 ## Blockers
+
 None
 
 ## Notes
+
 - **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`, `chat.typing`, `chat.join`. Channel is `chat:{roomId}`.
 - **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
 - **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
