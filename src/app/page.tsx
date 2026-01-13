@@ -1,22 +1,37 @@
 "use client";
 import { useState } from "react";
 import { useUsername } from "@/hooks/use-username";
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
 import { useMutation } from "@tanstack/react-query";
 import "nanoid";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 function App() {
   const { username } = useUsername();
   const router = useRouter();
+  const { toast } = useToast();
   const [roomId, setRoomId] = useState("");
 
-  const { mutate: createRoom } = useMutation({
+  const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
       const res = await api.rooms.create.post();
-      if (res.status === 200) {
-        router.push(`/room/${res.data?.roomId}`);
+      if (res.status === 200 && res.data?.roomId) {
+        const newRoomId = res.data.roomId;
+        const roomUrl = `${window.location.origin}/room/${newRoomId}`;
+        
+        await navigator.clipboard.writeText(roomUrl);
+        toast({ 
+          message: "Room created! Link copied to clipboard.", 
+          type: "success" 
+        });
+        
+        router.push(`/room/${newRoomId}`);
       }
+    },
+    onError: () => {
+      toast({ message: "Failed to create room. Try again.", type: "error" });
     },
   });
 
@@ -59,9 +74,17 @@ function App() {
             </div>
             <button
               onClick={() => createRoom()}
-              className="w-full bg-neutral-100 text-black p-3 text-sm font-bold hover:bg-neutral-50 hover:text-black transition-colors mt-2 cursor-pointer disabled:opacity-50 "
+              disabled={isPending}
+              className="w-full flex items-center justify-center gap-2 bg-neutral-100 text-black p-3 text-sm font-bold hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              CREATE SECURE ROOM
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  CREATING...
+                </>
+              ) : (
+                "CREATE SECURE ROOM"
+              )}
             </button>
 
             <div className="flex items-center gap-4 py-2">
