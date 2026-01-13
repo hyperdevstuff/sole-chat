@@ -3,78 +3,75 @@
 **Last Updated:** 2026-01-13
 **Branch:** dev
 
-## Priority 1: Critical Path
+## Priority 1: Core Chat Implementation (Critical Path)
 
-- [ ] Verify core chat flow works E2E (tool: Playwriter)
-  - Create room → join from second tab → send messages → verify sync
+- [ ] **Add Message History API** (file: `src/app/api/messages/route.ts`)
+  - Add `GET` handler to fetch messages from Redis list `messages:{roomId}`
+  - Ensure it validates room access via auth token
+  - Acceptance: `curl` request returns JSON array of messages
+
+- [ ] **Implement Chat Frontend Logic** (file: `src/app/room/[roomId]/page.tsx`)
+  - Use `useRealtime` hook to subscribe to `chat:{roomId}`
+  - Handle `chat.message` events to update local state
+  - Fetch initial history on mount (using TanStack Query)
+  - Acceptance: Sending a message updates the UI immediately; refreshing preserves history
+
+- [ ] **Implement Message List UI** (file: `src/app/room/[roomId]/page.tsx`)
+  - Create `MessageBubble` component (or inline)
+  - Distinguish between "You" (right aligned) and "Them" (left aligned)
+  - Auto-scroll to bottom on new message
+  - **Tool:** `frontend-ui-ux-engineer` (MANDATORY)
+  - Acceptance: Messages render correctly with visual distinction
+
+- [ ] **Verify Core Chat Flow E2E** (Tool: Playwriter)
+  - Create room -> join from second tab -> send messages -> verify sync
   - Acceptance: Messages appear in both tabs within 100ms
 
-- [ ] Add message timestamps display (tool: frontend-ui-ux-engineer)
-  - Show relative time for each message
-  - Acceptance: "just now", "1m ago", etc. visible
+## Priority 2: Essential UX
 
-- [ ] Improve error handling UX (tool: frontend-ui-ux-engineer)
-  - Toast notifications for errors
-  - Room full / expired feedback
-  - Acceptance: User sees clear error messages
+- [ ] **Add Message Timestamps** (file: `src/app/room/[roomId]/page.tsx`)
+  - Show relative time (e.g., "now", "2m")
+  - **Tool:** `frontend-ui-ux-engineer`
+  - Acceptance: Timestamps visible and accurate
 
-## Priority 2: Important
+- [ ] **Add Typing Indicators** (files: `src/lib/realtime.ts`, `src/app/room/[roomId]/page.tsx`)
+  - Add `chat.typing` event to Zod schema
+  - Implement debounce logic for emitting typing events
+  - Show "User is typing..." in UI
+  - **Tool:** `frontend-ui-ux-engineer`
+  - Acceptance: Indicator appears when other user types
 
-- [ ] Add typing indicator (files: src/lib/realtime.ts, src/app/room/[roomId]/page.tsx)
-  - New event type: `chat.typing`
-  - Debounced typing detection
-  - Tool: Context7 for Upstash Realtime patterns
-  - Acceptance: "User is typing..." appears when other user types
+- [ ] **Improve Error Handling** (files: `src/components/ui/toast.tsx`, `page.tsx`)
+  - Implement Toast component (or use library if available)
+  - Show errors for: Room full, Room expired, Network issues
+  - **Tool:** `frontend-ui-ux-engineer`
+  - Acceptance: Toast appears on error
 
-- [ ] Improve mobile responsiveness (tool: frontend-ui-ux-engineer)
-  - Test on various viewport sizes
-  - Fix any overflow issues
-  - Acceptance: Usable on 320px width
+## Priority 3: Polish & Nice to Have
 
-- [ ] Add connection status indicator (tool: frontend-ui-ux-engineer)
-  - Show connected/disconnected state
-  - Auto-reconnect feedback
-  - Acceptance: Visual indicator in UI
+- [ ] **Improve Mobile Responsiveness**
+  - Check input field on mobile (virtual keyboard handling)
+  - **Tool:** `frontend-ui-ux-engineer`
 
-## Priority 3: Nice to Have
+- [ ] **Connection Status Indicator**
+  - Show distinct visual for "Connecting...", "Connected", "Disconnected"
+  - **Tool:** `frontend-ui-ux-engineer`
 
-- [ ] Add sound notification for new messages
-  - Optional, user can disable
-  - Tool: Playwriter for testing
-
-- [ ] Add emoji picker
-  - Tool: frontend-ui-ux-engineer for UI
-  - Lightweight library selection
-
-- [ ] Add message reactions
-  - New Redis structure for reactions
-  - New realtime event type
+- [ ] **Sound Effects**
+  - Simple "pop" sound on new message
+  - Toggle in UI
 
 ## Completed
+- [x] Basic Project Setup (Next.js, Elysia, Upstash)
+- [x] Room Creation API & UI
+- [x] Room Joining Logic (Proxy middleware)
+- [x] Basic Message POST API (Backend only)
+- [x] Destruct Button UI
 
-_None yet - initial plan_
-
-## Blocked
-
-_None currently_
+## Blockers
+- None
 
 ## Notes
-
-### Tool Usage Reference
-| Task Type | Primary Tool |
-|-----------|--------------|
-| UI/Visual | frontend-ui-ux-engineer (MANDATORY) |
-| E2E Tests | Playwriter MCP |
-| API Docs | Context7 (`/upstash/realtime`, `/elysiajs/elysia`) |
-| Debug | Chrome DevTools MCP |
-| Examples | Exa web search |
-
-### Key Decisions
-- All UI work MUST go through frontend-ui-ux-engineer
-- Use frontend-design skill for new components
-- E2E verification via Playwriter for multi-user scenarios
-
-### Discovered Patterns
-- Elysia plugins mounted in catch-all route
-- Realtime events use Zod schemas
-- Hold-to-destroy pattern for destructive actions
+- **Realtime:** Events are defined in `src/lib/realtime.ts`. Channel is `chat:{roomId}`.
+- **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
+- **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
