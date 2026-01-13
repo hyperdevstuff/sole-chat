@@ -4,7 +4,7 @@ import { useUsername } from "@/hooks/use-username";
 import { api } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message, RealtimeEvents } from "@/lib/realtime";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Clipboard, ClipboardCheck, SendIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,9 +17,25 @@ const Page = () => {
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch initial message history
+  const { data: historyMessages = [] } = useQuery({
+    queryKey: ["messages", roomId],
+    queryFn: async () => {
+      const res = await api.messages.get({ query: { roomId } });
+      if (res.error) throw res.error;
+      return res.data as Message[];
+    },
+    staleTime: Infinity, // Don't refetch - realtime handles updates
+  });
+
+  // Merge history with realtime messages (deduplicated by id)
+  const messages = [...historyMessages, ...realtimeMessages].filter(
+    (msg, idx, arr) => arr.findIndex((m) => m.id === msg.id) === idx
+  );
 
   const handleRealtimeData = useCallback(
     (payload: {
@@ -28,7 +44,7 @@ const Page = () => {
       channel: string;
     }) => {
       if (payload.event === "chat.message") {
-        setMessages((prev) => [...prev, payload.data as Message]);
+        setRealtimeMessages((prev) => [...prev, payload.data as Message]);
       } else if (payload.event === "chat.destroy") {
         router.push("/");
       }

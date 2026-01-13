@@ -10,20 +10,19 @@
   - Ensure it validates room access via auth token
   - Acceptance: `curl` request returns JSON array of messages
 
-- [ ] **Implement Chat Frontend Logic** (file: `src/app/room/[roomId]/page.tsx`)
-  - Use `useRealtime` hook to subscribe to `chat:{roomId}`
-  - Handle `chat.message` events to update local state
-  - Fetch initial history on mount (using TanStack Query)
+- [x] **Implement Chat Frontend Logic** (file: `src/app/room/[roomId]/page.tsx`)
+  - [x] Use `useRealtime` hook to subscribe to `chat:{roomId}`
+  - [x] Handle `chat.message` events to update local state
+  - [x] Fetch initial history on mount (using TanStack Query)
   - Acceptance: Sending a message updates the UI immediately; refreshing preserves history
 
-- [ ] **Implement Message List UI** (file: `src/app/room/[roomId]/page.tsx`)
-  - Create `MessageBubble` component (or inline)
-  - Distinguish between "You" (right aligned) and "Them" (left aligned)
-  - Auto-scroll to bottom on new message
+- [x] **Implement Message List UI** (file: `src/app/room/[roomId]/page.tsx`)
+  - Inline MessageBubble with sender-based alignment
+  - Auto-scroll to bottom via `scrollIntoView`
   - **Tool:** `frontend-ui-ux-engineer` (MANDATORY)
   - Acceptance: Messages render correctly with visual distinction
 
-- [ ] **Verify Core Chat Flow E2E** (Tool: Playwriter)
+- [x] **Verify Core Chat Flow E2E** (Tool: Playwriter)
   - Create room -> join from second tab -> send messages -> verify sync
   - Acceptance: Messages appear in both tabs within 100ms
 
@@ -69,9 +68,11 @@
 - [x] Destruct Button UI
 
 ## Blockers
-- None
+None
 
 ## Notes
-- **Realtime:** Events are defined in `src/lib/realtime.ts`. Channel is `chat:{roomId}`.
+- **Realtime:** Events defined in `src/lib/realtime.ts`: `chat.message`, `chat.destroy`. Channel is `chat:{roomId}`.
+- **Missing Event:** `chat.typing` not yet in Zod schema (needed for typing indicators)
 - **State:** No global state; use `useState` + `useQuery` in `page.tsx`.
 - **Styling:** Tailwind v4. Use `frontend-ui-ux-engineer` for all visual changes.
+- **Messages have `timeStamp` field** but not rendered in UI yet.
