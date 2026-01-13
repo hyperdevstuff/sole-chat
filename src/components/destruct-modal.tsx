@@ -1,0 +1,69 @@
+"use client";
+import { useEffect } from "react";
+
+interface DestructModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onExportAndDestroy: () => void;
+  onJustDestroy: () => void;
+}
+
+export function DestructModal({
+  isOpen,
+  onClose,
+  onExportAndDestroy,
+  onJustDestroy,
+}: DestructModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" />
+      <div
+        className="relative bg-neutral-900 border border-neutral-800 rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold text-neutral-100 mb-2">
+          Destroy Room?
+        </h2>
+        <p className="text-sm text-neutral-400 mb-6">
+          This action cannot be undone. All messages will be permanently deleted.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onExportAndDestroy}
+            className="w-full py-2.5 px-4 bg-green-600/20 hover:bg-green-600/30 border border-green-600/40 text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+          >
+            Export & Destroy
+          </button>
+          <button
+            onClick={onJustDestroy}
+            className="w-full py-2.5 px-4 bg-red-600/20 hover:bg-red-600/30 border border-red-600/40 text-red-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+          >
+            Just Destroy
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-4 py-2 text-neutral-500 hover:text-neutral-300 text-sm transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}

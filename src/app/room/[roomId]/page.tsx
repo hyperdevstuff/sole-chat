@@ -1,5 +1,6 @@
 "use client";
 import { DestructButton } from "@/components/destruct-button";
+import { DestructModal } from "@/components/destruct-modal";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
@@ -37,6 +38,7 @@ const Page = () => {
   const [systemMessages, setSystemMessages] = useState<{ id: string; text: string; timestamp: number }[]>([]);
   const [warned60, setWarned60] = useState(false);
   const [warned10, setWarned10] = useState(false);
+  const [showDestructModal, setShowDestructModal] = useState(false);
   const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
@@ -257,11 +259,60 @@ const Page = () => {
   });
 
   const handleDestroy = () => {
-    destroyRoom();
+    setShowDestructModal(true);
   };
+
+  const formatExport = useCallback(() => {
+    const allItems = [
+      ...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timeStamp })),
+      ...systemMessages.map(s => ({ type: 'system' as const, data: s, timestamp: s.timestamp })),
+    ].sort((a, b) => a.timestamp - b.timestamp);
+
+    const lines = [
+      "SOLE-CHAT Export",
+      `Room: ${roomId}`,
+      `Exported: ${new Date().toISOString()}`,
+      "---",
+    ];
+
+    for (const item of allItems) {
+      const time = new Date(item.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+      if (item.type === "system") {
+        lines.push(`[${time}] --- ${item.data.text} ---`);
+      } else {
+        lines.push(`[${time}] ${item.data.sender}: ${item.data.text}`);
+      }
+    }
+
+    return lines.join("\n");
+  }, [messages, systemMessages, roomId]);
+
+  const handleExportAndDestroy = useCallback(() => {
+    const content = formatExport();
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sole-chat-${roomId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowDestructModal(false);
+    destroyRoom();
+  }, [formatExport, roomId, destroyRoom]);
+
+  const handleJustDestroy = useCallback(() => {
+    setShowDestructModal(false);
+    destroyRoom();
+  }, [destroyRoom]);
 
   return (
     <main className="flex flex-col h-screen max-h-screen overflow-hidden">
+      <DestructModal
+        isOpen={showDestructModal}
+        onClose={() => setShowDestructModal(false)}
+        onExportAndDestroy={handleExportAndDestroy}
+        onJustDestroy={handleJustDestroy}
+      />
       <header className="relative border-b border-neutral-800 p-4 flex items-center justify-between bg-neutral-900/30">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">

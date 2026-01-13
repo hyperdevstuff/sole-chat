@@ -68,7 +68,7 @@
   - Toast at <10s: "Room expires in 10 seconds!" with Keep Alive action
   - Acceptance: Warning toasts appear at correct thresholds
 
-- [ ] **Keep Alive** (files: `src/app/api/rooms/index.ts`, `src/app/room/[roomId]/page.tsx`)
+- [x] **Keep Alive** (commit: 5425f3d)
   - Backend: Add `PATCH /rooms/:roomId` to extend TTL by 10 min
     - Track total session age (createdAt in meta)
     - Reject if total would exceed 7 days
