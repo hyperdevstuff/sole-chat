@@ -88,11 +88,12 @@
 
 ### Typing Indicator Enhancement
 
-- [ ] Improve typing indicator animation (file: `src/app/room/[roomId]/page.tsx`)
-  - Current: Simple `animate-pulse` on text "X is typing..."
-  - Target: Add dot-bounce animation (3 dots with staggered animation)
-  - Acceptance: More polished typing indicator
-  - Tool: `frontend-ui-ux-engineer` agent
+- [x] Improve typing indicator animation (file: `src/app/room/[roomId]/page.tsx`)
+  - Created TypingIndicator component with 3 bouncing dots
+  - Staggered animation delays (0s, 0.15s, 0.3s)
+  - Subtle container with bg-neutral-800/30 rounded-full
+  - Uses TailwindCSS animate-bounce with [animation-duration:1s]
+  - Acceptance: Smooth bouncing dot animation
 
 ## Priority 4: Testing (Zero tests exist - Setup Required First)
 

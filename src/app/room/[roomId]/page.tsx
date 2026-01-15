@@ -45,6 +45,17 @@ const formatRelativeTime = (timestamp: number, now: number) => {
   return `${days}d`;
 };
 
+const TypingIndicator = ({ username }: { username: string }) => (
+  <div className="flex items-center gap-2 mb-2">
+    <span className="text-xs text-neutral-500 italic">{username} is typing</span>
+    <div className="flex items-center gap-1 bg-neutral-800/30 rounded-full px-2 py-1 h-5">
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0s' }} />
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.15s' }} />
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.3s' }} />
+    </div>
+  </div>
+);
+
 const Page = () => {
   const params = useParams();
   const router = useRouter();
@@ -530,11 +541,7 @@ const Page = () => {
             )
         )}
         {typingUser && (
-          <div className="flex items-start">
-            <span className="text-xs text-neutral-500 italic animate-pulse">
-              {typingUser} is typing...
-            </span>
-          </div>
+          <TypingIndicator username={typingUser} />
         )}
         <div ref={messagesEndRef} />
       </div>
