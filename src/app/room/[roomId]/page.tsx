@@ -12,6 +12,27 @@ import { Clipboard, ClipboardCheck, LogOut, SendIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const MessageSkeleton = () => (
+  <div className="w-full space-y-4 py-2">
+    <div className="flex flex-col items-start animate-pulse">
+      <div className="h-3 w-16 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-10 w-48 bg-neutral-800/50 rounded-lg rounded-tl-none" />
+    </div>
+    <div className="flex flex-col items-end animate-pulse">
+      <div className="h-3 w-16 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-12 w-64 bg-neutral-800/30 rounded-lg rounded-tr-none" />
+    </div>
+    <div className="flex flex-col items-start animate-pulse">
+      <div className="h-3 w-20 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-14 w-56 bg-neutral-800/50 rounded-lg rounded-tl-none" />
+    </div>
+    <div className="flex flex-col items-end animate-pulse">
+      <div className="h-3 w-14 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-10 w-40 bg-neutral-800/30 rounded-lg rounded-tr-none" />
+    </div>
+  </div>
+);
+
 const formatRelativeTime = (timestamp: number, now: number) => {
   const diff = now - timestamp;
   const minutes = Math.floor(diff / 60000);
@@ -49,7 +70,7 @@ const Page = () => {
   const prevStatusRef = useRef<string | null>(null);
 
   // Fetch initial message history
-  const { data: historyData } = useQuery({
+  const { data: historyData, isLoading: isHistoryLoading } = useQuery({
     queryKey: ["messages", roomId],
     queryFn: async () => {
       const res = await api.messages.get({ query: { roomId } });
@@ -474,36 +495,40 @@ const Page = () => {
         </button>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
-        {[...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timeStamp })),
-        ...systemMessages.map(s => ({ type: 'system' as const, data: s, timestamp: s.timestamp }))]
-          .sort((a, b) => a.timestamp - b.timestamp)
-          .map((item) =>
-            item.type === 'system' ? (
-              <div key={item.data.id} className="flex justify-center animate-fade-in">
-                <span className="text-xs text-neutral-500 italic">{item.data.text}</span>
-              </div>
-            ) : (
-              <div
-                key={item.data.id}
-                className={`flex flex-col ${item.data.sender === username ? "items-end" : "items-start"}`}
-              >
-                <span className="text-xs text-neutral-500 mb-1">
-                  {item.data.sender}
-                </span>
-                <div
-                  className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
-                    ? "bg-green-600/20 text-green-100 border border-green-700/30"
-                    : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
-                    }`}
-                >
-                  {item.data.text}
+        {isHistoryLoading ? (
+          <MessageSkeleton />
+        ) : (
+          [...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timeStamp })),
+          ...systemMessages.map(s => ({ type: 'system' as const, data: s, timestamp: s.timestamp }))]
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map((item) =>
+              item.type === 'system' ? (
+                <div key={item.data.id} className="flex justify-center animate-fade-in">
+                  <span className="text-xs text-neutral-500 italic">{item.data.text}</span>
                 </div>
-                <span className="text-xs text-neutral-500 mt-1 opacity-75">
-                  {formatRelativeTime(item.data.timeStamp, now)}
-                </span>
-              </div>
+              ) : (
+                <div
+                  key={item.data.id}
+                  className={`flex flex-col ${item.data.sender === username ? "items-end" : "items-start"}`}
+                >
+                  <span className="text-xs text-neutral-500 mb-1">
+                    {item.data.sender}
+                  </span>
+                  <div
+                    className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
+                      ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                      : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
+                      }`}
+                  >
+                    {item.data.text}
+                  </div>
+                  <span className="text-xs text-neutral-500 mt-1 opacity-75">
+                    {formatRelativeTime(item.data.timeStamp, now)}
+                  </span>
+                </div>
+              )
             )
-          )}
+        )}
         {typingUser && (
           <div className="flex items-start">
             <span className="text-xs text-neutral-500 italic animate-pulse">

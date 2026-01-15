@@ -79,12 +79,12 @@
 
 ### Loading States
 
-- [ ] Add skeleton loader for message history (file: `src/app/room/[roomId]/page.tsx`)
-  - Create skeleton component with pulse animation
-  - Show 3-5 placeholder message bubbles during load
-  - Currently shows blank area while loading
+- [x] Add skeleton loader for message history (file: `src/app/room/[roomId]/page.tsx`)
+  - Created inline MessageSkeleton component with 4 animated placeholder bubbles
+  - Alternating left/right alignment to mimic conversation
+  - Uses animate-pulse for shimmer effect with bg-neutral-800
+  - Shows skeleton when historyQuery.isLoading is true
   - Acceptance: Visual feedback during initial load
-  - Tool: `frontend-ui-ux-engineer` agent
 
 ### Typing Indicator Enhancement
 
