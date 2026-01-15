@@ -38,9 +38,11 @@
   - Acceptance: User sees error toast when emit fails
 
 ### Connection Recovery
-- [ ] Handle Upstash Realtime disconnections
-  - Implement reconnection with exponential backoff
-  - Show connection status indicator updates
+- [x] Handle Upstash Realtime disconnections (providers.tsx, page.tsx)
+  - RealtimeProvider configured with maxReconnectAttempts={5}
+  - Upstash Realtime auto-handles exponential backoff internally
+  - Re-emits join event on successful reconnection
+  - Shows "Reconnecting" indicator and toasts for status changes
   - Acceptance: Connection recovers after network blip
 
 ## Priority 3: UI/UX Improvements (Use frontend-ui-ux-engineer)
@@ -110,6 +112,7 @@
 - [x] Exit button (commit: efed18b)
 - [x] Connection status indicator (commit: initial)
 - [x] Room expired modal (commit: initial)
+- [x] Connection recovery with auto-reconnection and re-join
 
 ## Blocked
 

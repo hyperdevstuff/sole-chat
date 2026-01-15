@@ -46,6 +46,7 @@ const Page = () => {
   const hasEmittedJoin = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevStatusRef = useRef<string | null>(null);
 
   // Fetch initial message history
   const { data: historyData } = useQuery({
@@ -192,6 +193,36 @@ const Page = () => {
     events: ["chat.message", "chat.destroy", "chat.typing", "chat.join", "chat.leave"],
     onData: handleRealtimeData,
   });
+
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+
+    if (prev === null) return;
+
+    if (prev === "connecting" && status === "connected") {
+      if (hasEmittedJoin.current) {
+        toast({ message: "Reconnected to chat.", type: "success" });
+        if (username) {
+          fetch("/api/realtime", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              channel: `chat:${roomId}`,
+              event: "chat.join",
+              data: { username, timestamp: Date.now() },
+            }),
+          }).catch(() => {});
+        }
+      } else {
+        toast({ message: "Connected to chat.", type: "success" });
+      }
+    } else if (prev === "connected" && status === "connecting") {
+      toast({ message: "Connection lost. Reconnecting...", type: "warning" });
+    } else if (status === "error") {
+      toast({ message: "Connection failed. Please refresh the page.", type: "error" });
+    }
+  }, [status, toast, username, roomId]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 30000);

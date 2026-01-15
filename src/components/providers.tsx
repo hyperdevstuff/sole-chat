@@ -7,7 +7,7 @@ import { ToastProvider } from "@/hooks/use-toast";
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <RealtimeProvider>
+    <RealtimeProvider api={{ url: "/api/realtime" }} maxReconnectAttempts={5}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>{children}</ToastProvider>
       </QueryClientProvider>
