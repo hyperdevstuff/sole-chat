@@ -29,19 +29,10 @@ export const proxy = async (req: NextRequest) => {
       return NextResponse.next();
     }
   }
-  const userCount = await redis.scard(`connected:${roomId}`);
-  if (userCount >= 2) {
-    return NextResponse.redirect(new URL("/?error=room-full"));
-  }
-  const response = NextResponse.next();
+  // Generate token first, but only set cookie after Lua confirms join
   const token = nanoid();
-  response.cookies.set("x-auth-token", token, {
-    path: "/",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
 
+  // Atomic join: only add if room has < 2 users
   const joined = await redis.eval(
     `
     local count = redis.call('SCARD', KEYS[1])
@@ -55,7 +46,17 @@ export const proxy = async (req: NextRequest) => {
     [token],
   );
 
+  // If room is full, redirect WITHOUT setting any cookie
   if (!joined) return NextResponse.redirect(new URL("/?error=room-full"));
+
+  // Only set cookie AFTER Lua script confirms successful join
+  const response = NextResponse.next();
+  response.cookies.set("x-auth-token", token, {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
 
   const ttl = await redis.ttl(`meta:${roomId}`);
   await redis.expire(`connected:${roomId}`, ttl);
