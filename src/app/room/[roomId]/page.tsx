@@ -444,6 +444,7 @@ const Page = () => {
               )}
               <button
                 onClick={copyLink}
+                aria-label={copied ? "Room link copied to clipboard" : "Copy room link to clipboard"}
                 className="flex items-center gap-1.5 text-[10px] bg-neutral-800 hover:bg-neutral-700 px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
               >
                 {copied ? (
@@ -458,18 +459,19 @@ const Page = () => {
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <DestructButton
+            timeRemaining={timeRemaining}
+            onDestroy={handleDestroy}
+          />
           <button
             onClick={handleExit}
+            aria-label="Exit room without destroying"
             className="flex items-center gap-1.5 text-xs border border-neutral-800 hover:border-neutral-700 text-neutral-500 hover:text-neutral-300 px-3 py-2 rounded transition-colors cursor-pointer"
             title="Leave room without destroying"
           >
             <LogOut size={14} />
             <span>Exit</span>
           </button>
-          <DestructButton
-            timeRemaining={timeRemaining}
-            onDestroy={handleDestroy}
-          />
         </div>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
@@ -520,6 +522,7 @@ const Page = () => {
               {">"}
             </span>
             <input
+              aria-label="Message input"
               value={input}
               onChange={handleInputChange}
               autoFocus
@@ -538,6 +541,7 @@ const Page = () => {
             />
           </div>
           <button
+            aria-label="Send message"
             onClick={() => {
               if (input.trim()) {
                 sendMessage({ text: input });

@@ -75,6 +75,7 @@ function App() {
             <button
               onClick={() => createRoom()}
               disabled={isPending}
+              aria-label="Create a new secure chat room"
               className="w-full flex items-center justify-center gap-2 bg-neutral-100 text-black p-3 text-sm font-bold hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isPending ? (
@@ -108,6 +109,7 @@ function App() {
                 <button
                   onClick={handleJoin}
                   disabled={!roomId.trim()}
+                  aria-label="Join existing room"
                   className="px-6 border border-neutral-800 bg-transparent text-green-500 text-sm font-bold hover:bg-green-500/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   JOIN

@@ -7,24 +7,28 @@
 ## Priority 1: Critical Bugs
 
 ### Race Condition in Room Join
+
 - [x] Fix cookie set before Lua script confirms join (file: `src/proxy.ts:32-59`)
   - Move cookie setting AFTER Lua script returns 1 (success)
   - If Lua returns 0 (room full), return 403 without setting cookie
   - Acceptance: User cannot have auth cookie if not in connected set
 
 ### Redis Key Mismatch in Room Deletion
+
 - [x] Fix DELETE route cleaning wrong key (commit: ad87430)
   - Changed `users:{roomId}` to `connected:{roomId}`
   - Added `leaving:{roomId}` cleanup
   - Acceptance: All Redis keys for room are deleted on destruction
 
 ### Security: Token in Message History
+
 - [x] Remove auth token from stored messages (file: `src/app/api/messages/index.ts:24`)
   - Don't include `token` in the object pushed to Redis list
   - Token should only be in request validation, not persisted
   - Acceptance: Messages in Redis have no token field
 
 ### Memory Leak in Chat Room
+
 - [x] Clean up typingTimeoutRef on unmount (file: `src/app/room/[roomId]/page.tsx:117-121`)
   - Add clearTimeout in useEffect cleanup
   - Acceptance: No dangling timeout references
@@ -32,12 +36,14 @@
 ## Priority 2: Error Handling & Reliability
 
 ### Silent Error Handling
+
 - [x] Add proper error handling for realtime emit (file: `src/app/room/[roomId]/page.tsx:210`)
   - Show toast on join emit failure
   - Handle typing emit errors gracefully (only for typing=true to avoid spam)
   - Acceptance: User sees error toast when emit fails
 
 ### Connection Recovery
+
 - [x] Handle Upstash Realtime disconnections (providers.tsx, page.tsx)
   - RealtimeProvider configured with maxReconnectAttempts={5}
   - Upstash Realtime auto-handles exponential backoff internally
@@ -48,8 +54,11 @@
 ## Priority 3: UI/UX Improvements (Use frontend-ui-ux-engineer)
 
 ### Accessibility
-- [ ] Add aria-labels to buttons (files: `src/app/page.tsx`, `src/components/*.tsx`)
-  - Create Room, Join, Exit, Destroy buttons
+
+- [x] Add aria-labels to buttons (files: `src/app/page.tsx`, `src/components/*.tsx`)
+  - Moved exit button to rightmost position in header
+  - Added aria-labels to: Create Room, Join, Exit, Copy, Destroy, Send buttons
+  - Added aria-label to message input
   - Acceptance: All interactive elements have accessible names
 
 - [ ] Add focus trap to modals (files: `src/components/destruct-modal.tsx`, `expired-modal.tsx`)
@@ -58,17 +67,20 @@
   - Acceptance: Tab key cycles within modal only
 
 ### Mobile Responsiveness
+
 - [ ] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx`)
   - Change `h-screen` to `h-svh` (small viewport height)
   - Fixes iOS Safari address bar issue
   - Acceptance: Chat fills viewport correctly on iOS
 
 ### Loading States
+
 - [ ] Add skeleton loader for message history
   - Show animated placeholders while loading
   - Acceptance: Visual feedback during initial load
 
 ### Typing Indicator Enhancement
+
 - [ ] Improve typing indicator animation
   - Add dot-bounce animation instead of static text
   - Acceptance: More polished typing indicator
@@ -76,6 +88,7 @@
 ## Priority 4: Testing (Zero tests exist)
 
 ### E2E Tests (Playwright)
+
 - [ ] Test room creation flow
   - Create room, verify URL generated, auto-copy works
   - Acceptance: E2E test passes
@@ -93,6 +106,7 @@
   - Acceptance: Room destroyed, Redis cleaned
 
 ### Unit Tests
+
 - [ ] Test Lua scripts in isolation
   - Join script with 0, 1, 2 users
   - Leave script with grace period
@@ -121,12 +135,14 @@ _None currently_
 ## Notes
 
 ### Key Decisions
+
 - Elysia over Next.js API routes (better DX, Eden treaty client)
 - Upstash Realtime over raw WebSocket (managed, scales automatically)
 - 30s grace period for leave/rejoin (balance between UX and slot availability)
 - beforeunload is unreliable - server-side heartbeat may be needed for production
 
 ### Redis Key Schema
+
 ```
 connected:{roomId}  - SET of auth tokens (max 2)
 leaving:{roomId}    - SET of tokens in grace period
@@ -135,16 +151,19 @@ messages:{roomId}   - LIST of messages
 ```
 
 ### Patterns Discovered
+
 - Hold-to-destroy uses clip-path animation for visual feedback
 - TTL refreshed on every message send
 - All realtime events defined with Zod in `src/lib/realtime.ts`
 
 ### Risks
+
 - No heartbeat = can't detect zombie connections
 - beforeunload doesn't always fire (mobile, crash)
 - Consider server-side connection tracking for production
 
 ### Tool Usage
+
 | Task | Tool |
 |------|------|
 | UI changes | `frontend-ui-ux-engineer` agent (MANDATORY) |

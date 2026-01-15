@@ -45,6 +45,9 @@ export function DestructButton({
 
   return (
     <button
+      aria-label={`Hold for 2 seconds to destroy room. Time remaining: ${
+        timeRemaining !== null ? formatTimeRemaining(timeRemaining) : "unknown"
+      }`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => {
         setIsHovering(false);

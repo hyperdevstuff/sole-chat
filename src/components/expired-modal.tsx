@@ -30,12 +30,14 @@ export function ExpiredModal({
         <div className="flex flex-col gap-3">
           <button
             onClick={onExport}
+            aria-label="Export chat history"
             className="w-full py-2.5 px-4 bg-green-600/20 hover:bg-green-600/30 border border-green-600/40 text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Export Chat
           </button>
           <button
             onClick={onCreateNew}
+            aria-label="Create a new chat room"
             className="w-full py-2.5 px-4 bg-neutral-700/50 hover:bg-neutral-700 border border-neutral-600/40 text-neutral-300 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Create New Room

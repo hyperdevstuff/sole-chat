@@ -45,12 +45,14 @@ export function DestructModal({
         <div className="flex flex-col gap-3">
           <button
             onClick={onExportAndDestroy}
+            aria-label="Export chat history and destroy room"
             className="w-full py-2.5 px-4 bg-green-600/20 hover:bg-green-600/30 border border-green-600/40 text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Export & Destroy
           </button>
           <button
             onClick={onJustDestroy}
+            aria-label="Destroy room without exporting"
             className="w-full py-2.5 px-4 bg-red-600/20 hover:bg-red-600/30 border border-red-600/40 text-red-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Just Destroy
@@ -59,6 +61,7 @@ export function DestructModal({
 
         <button
           onClick={onClose}
+          aria-label="Cancel and return to chat"
           className="w-full mt-4 py-2 text-neutral-500 hover:text-neutral-300 text-sm transition-colors cursor-pointer"
         >
           Cancel
