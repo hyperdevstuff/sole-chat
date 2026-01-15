@@ -99,12 +99,13 @@
 
 ### Test Infrastructure Setup
 
-- [ ] Initialize Playwright for E2E tests
-  - Run: `bunx playwright init` with TypeScript
-  - Configure for Chromium only initially
-  - Add test scripts to package.json
-  - Create `playwright.config.ts`
-  - Acceptance: `bun run test:e2e` works
+- [x] Initialize Playwright for E2E tests
+  - Installed @playwright/test with TypeScript
+  - Created playwright.config.ts with Chromium only
+  - Added test:e2e and test:e2e:ui scripts to package.json
+  - Created tests/ directory with example.spec.ts
+  - Note: Requires `bunx playwright install-deps` on fresh systems
+  - Acceptance: `bun run test:e2e` works (requires browser deps)
 
 ### E2E Tests (Playwright)
 
