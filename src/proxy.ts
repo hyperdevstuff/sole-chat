@@ -19,6 +19,15 @@ export const proxy = async (req: NextRequest) => {
       existingToken,
     );
     if (isMember) return NextResponse.next();
+
+    const isInGrace = await redis.sismember(
+      `leaving:${roomId}`,
+      existingToken,
+    );
+    if (isInGrace) {
+      await redis.smove(`leaving:${roomId}`, `connected:${roomId}`, existingToken);
+      return NextResponse.next();
+    }
   }
   const userCount = await redis.scard(`connected:${roomId}`);
   if (userCount >= 2) {

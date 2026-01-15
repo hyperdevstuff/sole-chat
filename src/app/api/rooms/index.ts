@@ -78,4 +78,38 @@ export const rooms = new Elysia({ prefix: "/rooms" })
         roomId: t.String(),
       }),
     },
+  )
+  .post(
+    "/:roomId/leave",
+    async ({ params, auth, body }) => {
+      const { roomId } = params;
+      if (auth.roomId !== roomId) throw new Error("Unauthorized");
+
+      const GRACE_TTL = 30;
+      await redis.eval(
+        `
+        redis.call('SREM', KEYS[1], ARGV[1])
+        redis.call('SADD', KEYS[2], ARGV[1])
+        redis.call('EXPIRE', KEYS[2], ARGV[2])
+        return 1
+        `,
+        [`connected:${roomId}`, `leaving:${roomId}`],
+        [auth.token, GRACE_TTL.toString()],
+      );
+
+      await realtime.channel(`chat:${roomId}`).emit("chat.leave", {
+        username: body.username,
+        timestamp: Date.now(),
+      });
+
+      return { success: true };
+    },
+    {
+      params: t.Object({
+        roomId: t.String(),
+      }),
+      body: t.Object({
+        username: t.String(),
+      }),
+    },
   );

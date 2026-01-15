@@ -24,6 +24,10 @@ const schema = {
       username: z.string(),
       timestamp: z.number(),
     }),
+    leave: z.object({
+      username: z.string(),
+      timestamp: z.number(),
+    }),
   },
 };
 

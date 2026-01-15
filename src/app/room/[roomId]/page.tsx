@@ -1,13 +1,14 @@
 "use client";
 import { DestructButton } from "@/components/destruct-button";
 import { DestructModal } from "@/components/destruct-modal";
+import { ExpiredModal } from "@/components/expired-modal";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message, RealtimeEvents } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Clipboard, ClipboardCheck, SendIcon } from "lucide-react";
+import { Clipboard, ClipboardCheck, LogOut, SendIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -39,6 +40,7 @@ const Page = () => {
   const [warned60, setWarned60] = useState(false);
   const [warned10, setWarned10] = useState(false);
   const [showDestructModal, setShowDestructModal] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
   const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
@@ -100,7 +102,11 @@ const Page = () => {
 
   // Countdown timer
   useEffect(() => {
-    if (timeRemaining === null || timeRemaining <= 0) return;
+    if (timeRemaining === null) return;
+    if (timeRemaining <= 0) {
+      setShowExpiredModal(true);
+      return;
+    }
     const interval = setInterval(() => {
       setTimeRemaining((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
     }, 1000);
@@ -135,7 +141,7 @@ const Page = () => {
 
   const handleRealtimeData = useCallback(
     (payload: {
-      event: "chat.message" | "chat.destroy" | "chat.typing" | "chat.join";
+      event: "chat.message" | "chat.destroy" | "chat.typing" | "chat.join" | "chat.leave";
       data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean } | { username: string; timestamp: number };
       channel: string;
     }) => {
@@ -151,9 +157,22 @@ const Page = () => {
       } else if (payload.event === "chat.join") {
         const joinData = payload.data as { username: string; timestamp: number };
         if (joinData.username !== username) {
+          setSystemMessages((prev) => {
+            // Dedupe: don't add "X joined" if already present for this username
+            const alreadyJoined = prev.some((msg) => msg.text === `${joinData.username} joined`);
+            if (alreadyJoined) return prev;
+            return [
+              ...prev,
+              { id: `join-${joinData.timestamp}`, text: `${joinData.username} joined`, timestamp: joinData.timestamp },
+            ];
+          });
+        }
+      } else if (payload.event === "chat.leave") {
+        const leaveData = payload.data as { username: string; timestamp: number };
+        if (leaveData.username !== username) {
           setSystemMessages((prev) => [
             ...prev,
-            { id: `join-${joinData.timestamp}`, text: `${joinData.username} joined`, timestamp: joinData.timestamp },
+            { id: `leave-${leaveData.timestamp}`, text: `${leaveData.username} left`, timestamp: leaveData.timestamp },
           ]);
         }
       }
@@ -161,9 +180,9 @@ const Page = () => {
     [router, username],
   );
 
-  useRealtime({
+  const { status } = useRealtime({
     channels: [`chat:${roomId}`],
-    events: ["chat.message", "chat.destroy", "chat.typing", "chat.join"],
+    events: ["chat.message", "chat.destroy", "chat.typing", "chat.join", "chat.leave"],
     onData: handleRealtimeData,
   });
 
@@ -196,6 +215,18 @@ const Page = () => {
     const timer = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(timer);
   }, [copied]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!username) return;
+      navigator.sendBeacon(
+        `/api/rooms/${roomId}/leave?roomId=${roomId}`,
+        JSON.stringify({ username }),
+      );
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [roomId, username]);
 
   const emitTyping = useCallback(
     async (isTyping: boolean) => {
@@ -305,6 +336,27 @@ const Page = () => {
     destroyRoom();
   }, [destroyRoom]);
 
+  const handleExit = useCallback(async () => {
+    if (!username) return;
+    await api.rooms({ roomId }).leave.post({ username });
+    router.push("/");
+  }, [roomId, username, router]);
+
+  const handleExpiredExport = useCallback(() => {
+    const content = formatExport();
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sole-chat-${roomId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [formatExport, roomId]);
+
+  const handleCreateNew = useCallback(() => {
+    router.push("/");
+  }, [router]);
+
   return (
     <main className="flex flex-col h-screen max-h-screen overflow-hidden">
       <DestructModal
@@ -313,12 +365,32 @@ const Page = () => {
         onExportAndDestroy={handleExportAndDestroy}
         onJustDestroy={handleJustDestroy}
       />
+      <ExpiredModal
+        isOpen={showExpiredModal}
+        onExport={handleExpiredExport}
+        onCreateNew={handleCreateNew}
+      />
       <header className="relative border-b border-neutral-800 p-4 flex items-center justify-between bg-neutral-900/30">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <span className="text-xs text-neutral-500 uppercase">room id</span>
             <div className="flex items-center gap-2">
               <span className="font-bold text-green-500">{roomId}</span>
+              {status !== "connected" && (
+                <span
+                  className={`flex items-center gap-1.5 text-[10px] ${
+                    status === "error" ? "text-red-400" : "text-yellow-400"
+                  }`}
+                  title={status === "error" ? "Connection lost" : "Reconnecting..."}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      status === "error" ? "bg-red-400" : "bg-yellow-400 animate-pulse-subtle"
+                    }`}
+                  />
+                  {status === "error" ? "Disconnected" : "Reconnecting"}
+                </span>
+              )}
               <button
                 onClick={copyLink}
                 className="flex items-center gap-1.5 text-[10px] bg-neutral-800 hover:bg-neutral-700 px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
@@ -334,7 +406,15 @@ const Page = () => {
           </div>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <button
+            onClick={handleExit}
+            className="flex items-center gap-1.5 text-xs border border-neutral-800 hover:border-neutral-700 text-neutral-500 hover:text-neutral-300 px-3 py-2 rounded transition-colors cursor-pointer"
+            title="Leave room without destroying"
+          >
+            <LogOut size={14} />
+            <span>Exit</span>
+          </button>
           <DestructButton
             timeRemaining={timeRemaining}
             onDestroy={handleDestroy}
@@ -347,7 +427,7 @@ const Page = () => {
           .sort((a, b) => a.timestamp - b.timestamp)
           .map((item) => 
             item.type === 'system' ? (
-              <div key={item.data.id} className="flex justify-center">
+              <div key={item.data.id} className="flex justify-center animate-fade-in">
                 <span className="text-xs text-neutral-500 italic">{item.data.text}</span>
               </div>
             ) : (
@@ -400,9 +480,10 @@ const Page = () => {
                   inputRef.current?.focus();
                 }
               }}
-              placeholder="Type Message..."
+              placeholder={showExpiredModal ? "Room expired" : "Type Message..."}
               type="text"
-              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-sm text-wrap"
+              disabled={showExpiredModal}
+              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-sm text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           <button
@@ -413,7 +494,7 @@ const Page = () => {
                 emitTyping(false);
               }
             }}
-            disabled={!input.trim()}
+            disabled={!input.trim() || showExpiredModal}
             className="bg-neutral-800 px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer "
           >
             <SendIcon width={18}></SendIcon>
