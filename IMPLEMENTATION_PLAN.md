@@ -25,7 +25,7 @@
   - Acceptance: Messages in Redis have no token field
 
 ### Memory Leak in Chat Room
-- [ ] Clean up typingTimeoutRef on unmount (file: `src/app/room/[roomId]/page.tsx:253`)
+- [x] Clean up typingTimeoutRef on unmount (file: `src/app/room/[roomId]/page.tsx:117-121`)
   - Add clearTimeout in useEffect cleanup
   - Acceptance: No dangling timeout references
 

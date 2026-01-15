@@ -113,6 +113,13 @@ const Page = () => {
     return () => clearInterval(interval);
   }, [timeRemaining]);
 
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
   // Warning toasts
   useEffect(() => {
     if (timeRemaining === null) return;
