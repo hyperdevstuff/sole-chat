@@ -19,7 +19,7 @@
   - Acceptance: All Redis keys for room are deleted on destruction
 
 ### Security: Token in Message History
-- [ ] Remove auth token from stored messages (file: `src/app/api/messages/index.ts:26-27`)
+- [x] Remove auth token from stored messages (file: `src/app/api/messages/index.ts:24`)
   - Don't include `token` in the object pushed to Redis list
   - Token should only be in request validation, not persisted
   - Acceptance: Messages in Redis have no token field
