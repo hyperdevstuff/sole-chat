@@ -113,15 +113,15 @@
   - Create room, verify URL generated, auto-copy works
   - Acceptance: E2E test passes
 
-- [ ] Test 2-user limit enforcement
+- [x] Test 2-user limit enforcement
   - User 1 joins, User 2 joins, User 3 should see "room full"
   - Acceptance: Third user cannot join
 
-- [ ] Test message delivery
+- [x] Test message delivery
   - Send message, verify other user receives via realtime
   - Acceptance: <100ms delivery verified
 
-- [ ] Test room destruction
+- [x] Test room destruction
   - Hold button 2s, verify both users redirected
   - Acceptance: Room destroyed, Redis cleaned
 
