@@ -214,8 +214,14 @@ const Page = () => {
         event: "chat.join",
         data: { username, timestamp: Date.now() },
       }),
-    }).catch(() => {});
-  }, [roomId, username]);
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Join emit failed");
+      })
+      .catch(() => {
+        toast({ message: "Failed to announce your presence.", type: "error" });
+      });
+  }, [roomId, username, toast]);
 
   useEffect(() => {
     if (!copied) return;
@@ -238,7 +244,7 @@ const Page = () => {
   const emitTyping = useCallback(
     async (isTyping: boolean) => {
       try {
-        await fetch("/api/realtime", {
+        const res = await fetch("/api/realtime", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -247,9 +253,16 @@ const Page = () => {
             data: { sender: username, isTyping },
           }),
         });
-      } catch {}
+        if (!res.ok) throw new Error("Typing emit failed");
+      } catch {
+        // Only show toast for typing=true (start typing) to avoid spam
+        // Silently ignore typing=false failures
+        if (isTyping) {
+          toast({ message: "Connection issue - typing indicator may not be visible.", type: "warning" });
+        }
+      }
     },
-    [roomId, username],
+    [roomId, username, toast],
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

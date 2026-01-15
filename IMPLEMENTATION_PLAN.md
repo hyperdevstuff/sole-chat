@@ -32,9 +32,9 @@
 ## Priority 2: Error Handling & Reliability
 
 ### Silent Error Handling
-- [ ] Add proper error handling for realtime emit (file: `src/app/room/[roomId]/page.tsx:210`)
+- [x] Add proper error handling for realtime emit (file: `src/app/room/[roomId]/page.tsx:210`)
   - Show toast on join emit failure
-  - Handle typing emit errors gracefully
+  - Handle typing emit errors gracefully (only for typing=true to avoid spam)
   - Acceptance: User sees error toast when emit fails
 
 ### Connection Recovery
