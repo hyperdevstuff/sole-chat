@@ -1,6 +1,6 @@
 # Implementation Plan
 
-**Updated:** 2026-01-15
+**Updated:** 2026-01-15 (Planning Review)
 **Branch:** dev
 **Last Commit:** efed18b feat: add leave/rejoin system
 
@@ -71,24 +71,40 @@
 
 ### Mobile Responsiveness
 
-- [ ] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx`)
+- [ ] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx:412`)
   - Change `h-screen` to `h-svh` (small viewport height)
+  - Also check `src/app/page.tsx:53` for `min-h-screen` → `min-h-svh`
   - Fixes iOS Safari address bar issue
   - Acceptance: Chat fills viewport correctly on iOS
+  - Tool: `frontend-ui-ux-engineer` agent
 
 ### Loading States
 
-- [ ] Add skeleton loader for message history
-  - Show animated placeholders while loading
+- [ ] Add skeleton loader for message history (file: `src/app/room/[roomId]/page.tsx`)
+  - Create skeleton component with pulse animation
+  - Show 3-5 placeholder message bubbles during load
+  - Currently shows blank area while loading
   - Acceptance: Visual feedback during initial load
+  - Tool: `frontend-ui-ux-engineer` agent
 
 ### Typing Indicator Enhancement
 
-- [ ] Improve typing indicator animation
-  - Add dot-bounce animation instead of static text
+- [ ] Improve typing indicator animation (file: `src/app/room/[roomId]/page.tsx`)
+  - Current: Simple `animate-pulse` on text "X is typing..."
+  - Target: Add dot-bounce animation (3 dots with staggered animation)
   - Acceptance: More polished typing indicator
+  - Tool: `frontend-ui-ux-engineer` agent
 
-## Priority 4: Testing (Zero tests exist)
+## Priority 4: Testing (Zero tests exist - Setup Required First)
+
+### Test Infrastructure Setup
+
+- [ ] Initialize Playwright for E2E tests
+  - Run: `bunx playwright init` with TypeScript
+  - Configure for Chromium only initially
+  - Add test scripts to package.json
+  - Create `playwright.config.ts`
+  - Acceptance: `bun run test:e2e` works
 
 ### E2E Tests (Playwright)
 
@@ -130,6 +146,49 @@
 - [x] Connection status indicator (commit: initial)
 - [x] Room expired modal (commit: initial)
 - [x] Connection recovery with auto-reconnection and re-join
+
+## Priority 5: Code Quality (Discovered Issues)
+
+### Debug Code Cleanup
+
+- [ ] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
+  - Production code should not have debug logging
+  - Acceptance: No console.log in production code
+
+### Dead Code Removal
+
+- [ ] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
+  - Clean up unused/commented code
+  - Acceptance: No commented-out code blocks
+
+### Constants Refactor
+
+- [ ] Extract hardcoded constants to config (files: multiple)
+  - TTL values (10 min room, 30s grace period)
+  - Typing timeout (2s)
+  - Create `src/lib/constants.ts`
+  - Acceptance: Single source of truth for magic numbers
+
+### Error Handling Audit
+
+- [ ] Review silent catch blocks (files: multiple)
+  - Some catch blocks swallow errors silently
+  - Add proper logging or user feedback
+  - Acceptance: All catch blocks either log or notify
+
+### Future: Heartbeat System
+
+- [ ] Implement heartbeat for zombie connection detection
+  - Current beforeunload is unreliable
+  - Consider periodic ping from client
+  - Acceptance: Zombie slots freed within 60s
+
+### Future: Scroll Behavior
+
+- [ ] Handle "user scrolled up" case for new messages
+  - Currently auto-scrolls regardless of user position
+  - Show "new messages" indicator when scrolled up
+  - Acceptance: User scroll position preserved
 
 ## Blocked
 
