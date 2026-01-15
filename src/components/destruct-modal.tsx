@@ -1,5 +1,6 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useFocusTrap } from "../hooks/use-focus-trap";
 
 interface DestructModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ export function DestructModal({
   onExportAndDestroy,
   onJustDestroy,
 }: DestructModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -32,6 +36,9 @@ export function DestructModal({
     >
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" />
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
         className="relative bg-neutral-900 border border-neutral-800 rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >

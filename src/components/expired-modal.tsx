@@ -1,22 +1,41 @@
 "use client";
+import { useEffect, useRef } from "react";
+import { useFocusTrap } from "../hooks/use-focus-trap";
 
 interface ExpiredModalProps {
   isOpen: boolean;
   onExport: () => void;
   onCreateNew: () => void;
+  onClose: () => void;
 }
 
 export function ExpiredModal({
   isOpen,
   onExport,
   onCreateNew,
+  onClose,
 }: ExpiredModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" />
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
         className="relative bg-neutral-900 border border-neutral-800 rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >

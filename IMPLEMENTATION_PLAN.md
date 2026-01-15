@@ -61,9 +61,12 @@
   - Added aria-label to message input
   - Acceptance: All interactive elements have accessible names
 
-- [ ] Add focus trap to modals (files: `src/components/destruct-modal.tsx`, `expired-modal.tsx`)
-  - Trap focus within modal when open
-  - Add aria-modal="true" and role="dialog"
+- [x] Add focus trap to modals (files: `src/components/destruct-modal.tsx`, `expired-modal.tsx`)
+  - Created reusable `useFocusTrap` hook in `src/hooks/use-focus-trap.ts`
+  - Added aria-modal="true" and role="dialog" to both modals
+  - Tab cycles within modal, Shift+Tab cycles backwards
+  - Focus auto-set to first button, restored on close
+  - Added Escape key handling to ExpiredModal for consistency
   - Acceptance: Tab key cycles within modal only
 
 ### Mobile Responsiveness

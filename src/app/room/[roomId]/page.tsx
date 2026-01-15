@@ -420,6 +420,7 @@ const Page = () => {
         isOpen={showExpiredModal}
         onExport={handleExpiredExport}
         onCreateNew={handleCreateNew}
+        onClose={() => setShowExpiredModal(false)}
       />
       <header className="relative border-b border-neutral-800 p-4 flex items-center justify-between bg-neutral-900/30">
         <div className="flex items-center gap-4">
