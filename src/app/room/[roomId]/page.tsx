@@ -409,7 +409,7 @@ const Page = () => {
   }, [router]);
 
   return (
-    <main className="flex flex-col h-screen max-h-screen overflow-hidden">
+    <main className="flex flex-col h-svh max-h-svh overflow-hidden">
       <DestructModal
         isOpen={showDestructModal}
         onClose={() => setShowDestructModal(false)}

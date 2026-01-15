@@ -71,12 +71,11 @@
 
 ### Mobile Responsiveness
 
-- [ ] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx:412`)
-  - Change `h-screen` to `h-svh` (small viewport height)
-  - Also check `src/app/page.tsx:53` for `min-h-screen` → `min-h-svh`
+- [x] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx:412`)
+  - Changed `h-screen max-h-screen` to `h-svh max-h-svh` (small viewport height)
+  - Changed `min-h-screen` to `min-h-svh` in `src/app/page.tsx:53`
   - Fixes iOS Safari address bar issue
   - Acceptance: Chat fills viewport correctly on iOS
-  - Tool: `frontend-ui-ux-engineer` agent
 
 ### Loading States
 
