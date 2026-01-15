@@ -109,7 +109,7 @@
 
 ### E2E Tests (Playwright)
 
-- [ ] Test room creation flow
+- [x] Test room creation flow
   - Create room, verify URL generated, auto-copy works
   - Acceptance: E2E test passes
 
