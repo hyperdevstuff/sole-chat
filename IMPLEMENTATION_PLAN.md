@@ -13,9 +13,9 @@
   - Acceptance: User cannot have auth cookie if not in connected set
 
 ### Redis Key Mismatch in Room Deletion
-- [ ] Fix DELETE route cleaning wrong key (file: `src/app/api/rooms/index.ts:73`)
-  - Change `users:{roomId}` to `connected:{roomId}`
-  - Also clean `leaving:{roomId}` and `meta:{roomId}` keys
+- [x] Fix DELETE route cleaning wrong key (commit: ad87430)
+  - Changed `users:{roomId}` to `connected:{roomId}`
+  - Added `leaving:{roomId}` cleanup
   - Acceptance: All Redis keys for room are deleted on destruction
 
 ### Security: Token in Message History

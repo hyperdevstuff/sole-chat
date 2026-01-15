@@ -70,7 +70,12 @@ export const rooms = new Elysia({ prefix: "/rooms" })
       await realtime
         .channel(`chat:${roomId}`)
         .emit("chat.destroy", { isDestroyed: true });
-      await redis.del(`meta:${roomId}`, `messages:${roomId}`, `users:${roomId}`);
+      await redis.del(
+        `meta:${roomId}`,
+        `messages:${roomId}`,
+        `connected:${roomId}`,
+        `leaving:${roomId}`,
+      );
       return { success: true };
     },
     {
