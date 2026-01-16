@@ -152,13 +152,13 @@
 
 ### Debug Code Cleanup
 
-- [ ] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
+- [x] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
   - Production code should not have debug logging
   - Acceptance: No console.log in production code
 
 ### Dead Code Removal
 
-- [ ] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
+- [x] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
   - Clean up unused/commented code
   - Acceptance: No commented-out code blocks
 
