@@ -8,7 +8,7 @@ export const proxy = async (req: NextRequest) => {
   const roomMatch = pathname.match(/^\/room\/([^/]+)$/);
   if (!roomMatch) return NextResponse.redirect(new URL("/", req.url));
   const roomId = roomMatch[1];
-  const meta = await redis.hgetall<{ createdAt: number }>(`meta:${roomId}`);
+  const meta = await redis.hgetall<{ createdAt: string }>(`meta:${roomId}`);
   if (!meta)
     return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
 

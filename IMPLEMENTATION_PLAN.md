@@ -1,8 +1,8 @@
 # Implementation Plan
 
-**Updated:** 2026-01-15 (Planning Review)
+**Updated:** 2026-01-16 (Planning Review)
 **Branch:** dev
-**Last Commit:** efed18b feat: add leave/rejoin system
+**Last Commit:** 13f6f25 fix: silent catch blocks
 
 ## Priority 1: Critical Bugs
 
@@ -95,7 +95,7 @@
   - Uses TailwindCSS animate-bounce with [animation-duration:1s]
   - Acceptance: Smooth bouncing dot animation
 
-## Priority 4: Testing (Zero tests exist - Setup Required First)
+## Priority 4: Testing
 
 ### Test Infrastructure Setup
 
@@ -103,39 +103,107 @@
   - Installed @playwright/test with TypeScript
   - Created playwright.config.ts with Chromium only
   - Added test:e2e and test:e2e:ui scripts to package.json
-  - Created tests/ directory with example.spec.ts
+  - Created tests/ directory with 4 E2E test files
   - Note: Requires `bunx playwright install-deps` on fresh systems
   - Acceptance: `bun run test:e2e` works (requires browser deps)
 
 ### E2E Tests (Playwright)
 
-- [x] Test room creation flow
+- [x] Test room creation flow (file: `tests/room-creation.spec.ts`)
   - Create room, verify URL generated, auto-copy works
   - Acceptance: E2E test passes
 
-- [x] Test 2-user limit enforcement
+- [x] Test 2-user limit enforcement (file: `tests/user-limit.spec.ts`)
   - User 1 joins, User 2 joins, User 3 should see "room full"
   - Acceptance: Third user cannot join
 
-- [x] Test message delivery
+- [x] Test message delivery (file: `tests/message-delivery.spec.ts`)
   - Send message, verify other user receives via realtime
   - Acceptance: <100ms delivery verified
 
-- [x] Test room destruction
+- [x] Test room destruction (file: `tests/room-destruction.spec.ts`)
   - Hold button 2s, verify both users redirected
   - Acceptance: Room destroyed, Redis cleaned
 
 ### Unit Tests
 
-- [x] Test Lua scripts in isolation (commit: pending)
+- [x] Test Lua scripts in isolation (file: `src/lib/__tests__/lua-scripts.test.ts`)
   - Created `src/lib/lua-scripts.ts` with exported JOIN_SCRIPT and LEAVE_SCRIPT
-  - Created `src/lib/__tests__/lua-scripts.test.ts` with 9 tests
-  - Test cases: empty room join, 1-user join, 2-user rejection, idempotent join
-  - Test cases: leave moves to leaving set, leave sets TTL, leave without connected
-  - Test cases: rejoin flow after leave, full integration (join/join/reject/leave/join)
-  - Updated proxy.ts and rooms/index.ts to use extracted Lua scripts
-  - Added `bun test src` for unit tests, installed @types/bun
+  - 9 tests covering: empty room join, 1-user join, 2-user rejection, idempotent join
+  - Leave moves to leaving set, leave sets TTL, leave without connected
+  - Rejoin flow after leave, full integration test
   - Acceptance: All edge cases covered
+
+## Priority 5: Code Quality
+
+### Debug Code Cleanup
+
+- [x] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
+  - Production code should not have debug logging
+  - Acceptance: No console.log in production code
+
+### Dead Code Removal
+
+- [x] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
+  - Clean up unused/commented code
+  - Acceptance: No commented-out code blocks
+
+### Constants Refactor
+
+- [x] Extract hardcoded constants to config (file: `src/lib/constants.ts`)
+  - Created constants for all TTL, timeout, and threshold values
+  - Updated rooms/index.ts, destruct-button.tsx, room page
+  - Acceptance: Single source of truth for magic numbers
+
+### Error Handling Audit
+
+- [x] Review silent catch blocks (files: multiple)
+  - Audited 5 catch blocks across 2 files
+  - Added console.warn to reconnection join emit
+  - Added toast feedback to copyLink() failure
+  - Acceptance: All catch blocks either log or notify
+
+## Priority 6: Type Safety (Discovered Issue)
+
+### createdAt Type Inconsistency
+
+- [x] Fix type mismatch between proxy.ts and rooms/index.ts (files: `src/proxy.ts:11`, `src/app/api/rooms/index.ts:29`)
+  - Changed proxy.ts to type createdAt as `string` (matches Redis storage)
+  - rooms/index.ts already correct with `string` type and parseInt parsing
+  - Acceptance: Consistent typing across files
+
+## Future Enhancements
+
+### Heartbeat System (Reliability)
+
+- [ ] Implement heartbeat for zombie connection detection
+  - Current: beforeunload is unreliable (doesn't fire on mobile/crash)
+  - Solution: Periodic ping from client, server-side timeout tracking
+  - Consider: WebSocket ping/pong or periodic /api/heartbeat calls
+  - Acceptance: Zombie slots freed within 60s
+
+### Scroll Behavior (UX)
+
+- [ ] Handle "user scrolled up" case for new messages
+  - Current: Auto-scrolls regardless of user position
+  - Solution: Track scroll position, show "new messages" indicator when scrolled up
+  - Only auto-scroll if user is at bottom (within threshold)
+  - Acceptance: User scroll position preserved, badge shows new message count
+
+### Reusable UI Components (DX)
+
+- [ ] Extract common UI patterns to shared components
+  - Button component (variants: primary, secondary, danger)
+  - Input component with consistent styling
+  - Empty state component
+  - Acceptance: Consistent UI, reduced duplication
+
+### Mobile UX Improvements
+
+- [ ] Improve mobile ergonomics for DestructButton
+  - Current: Hold-to-destroy may be awkward on mobile
+  - Consider: Alternative mobile gesture or confirmation flow
+  - Acceptance: User testing confirms usability
 
 ## Completed
 
@@ -152,50 +220,6 @@
 - [x] Connection status indicator (commit: initial)
 - [x] Room expired modal (commit: initial)
 - [x] Connection recovery with auto-reconnection and re-join
-
-## Priority 5: Code Quality (Discovered Issues)
-
-### Debug Code Cleanup
-
-- [x] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
-  - Production code should not have debug logging
-  - Acceptance: No console.log in production code
-
-### Dead Code Removal
-
-- [x] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
-  - Clean up unused/commented code
-  - Acceptance: No commented-out code blocks
-
-### Constants Refactor
-
-- [x] Extract hardcoded constants to config (files: multiple)
-  - Created `src/lib/constants.ts` with all TTL, timeout, and threshold values
-  - Updated `src/app/api/rooms/index.ts`, `src/components/destruct-button.tsx`, `src/app/room/[roomId]/page.tsx`
-  - Acceptance: Single source of truth for magic numbers
-
-### Error Handling Audit
-
-- [x] Review silent catch blocks (files: multiple)
-  - Audited 5 catch blocks across 2 files
-  - Added console.warn to reconnection join emit (page.tsx:253)
-  - Added toast feedback to copyLink() failure (page.tsx:364)
-  - Other catches are intentional (URL parsing fallback, typing emit comment)
-  - Acceptance: All catch blocks either log or notify
-
-### Future: Heartbeat System
-
-- [ ] Implement heartbeat for zombie connection detection
-  - Current beforeunload is unreliable
-  - Consider periodic ping from client
-  - Acceptance: Zombie slots freed within 60s
-
-### Future: Scroll Behavior
-
-- [ ] Handle "user scrolled up" case for new messages
-  - Currently auto-scrolls regardless of user position
-  - Show "new messages" indicator when scrolled up
-  - Acceptance: User scroll position preserved
 
 ## Blocked
 
@@ -224,11 +248,24 @@ messages:{roomId}   - LIST of messages
 - Hold-to-destroy uses clip-path animation for visual feedback
 - TTL refreshed on every message send
 - All realtime events defined with Zod in `src/lib/realtime.ts`
+- Message deduplication by ID on client side
+- TypingIndicator uses staggered bounce animation
+
+### Test Coverage Summary
+
+| Area | Coverage | Notes |
+|------|----------|-------|
+| Lua scripts | High | 9 unit tests, edge cases covered |
+| E2E flows | High | 4 test files covering core flows |
+| API integration | None | No dedicated API tests |
+| React hooks | None | No unit tests for hooks |
+| Error boundaries | None | No error boundary tests |
 
 ### Risks
 
 - No heartbeat = can't detect zombie connections
 - beforeunload doesn't always fire (mobile, crash)
+- E2E tests require live Upstash Redis
 - Consider server-side connection tracking for production
 
 ### Tool Usage
