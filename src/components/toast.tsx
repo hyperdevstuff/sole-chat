@@ -100,10 +100,10 @@ export function Toast({
       <div className="shrink-0">{icons[type]}</div>
       
       <div className="flex-1 pt-0.5">
-        <p className="text-sm font-medium leading-none text-neutral-200">
+        <p className="text-sm font-medium leading-none text-foreground">
           {type.charAt(0).toUpperCase() + type.slice(1)}
         </p>
-        <p className="mt-1 text-sm text-neutral-400 leading-relaxed">
+        <p className="mt-1 text-sm text-muted leading-relaxed">
           {message}
         </p>
         {action && (
@@ -112,7 +112,7 @@ export function Toast({
               action.onClick();
               handleDismiss();
             }}
-            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-colors"
+            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-surface-elevated hover:bg-border text-foreground transition-colors"
           >
             {action.label}
           </button>
@@ -121,12 +121,12 @@ export function Toast({
 
       <button
         onClick={handleDismiss}
-        className="shrink-0 rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-neutral-800/50 focus:outline-none focus:ring-2 focus:ring-neutral-500 text-neutral-400"
+        className="shrink-0 rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-surface-elevated focus:outline-none focus:ring-2 focus:ring-border-strong text-muted"
       >
         <X className="w-4 h-4" />
       </button>
 
-      <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/20">
+      <div className="absolute bottom-0 left-0 h-0.5 w-full bg-border/20">
         <div
           className={`h-full ${progressStyles[type]} transition-all duration-75 ease-linear`}
           style={{ width: `${progress}%` }}

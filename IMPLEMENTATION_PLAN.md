@@ -71,61 +71,51 @@
   - Also exports: `setStoredTheme()`, `resolveTheme()`, `themeInitScript`
   - Acceptance: Clean separation of theme logic ✓
 
-- [ ] Create theme hook (file: `src/hooks/use-theme.ts` - NEW)
+- [x] Create theme hook (file: `src/hooks/use-theme.ts`)
   - Return `{ theme, setTheme, resolvedTheme }`
-  - Listen to `prefers-color-scheme` changes
+  - Listen to `prefers-color-scheme` changes via useSyncExternalStore
   - Persist to localStorage
   - Acceptance: React components can read/write theme
 
-- [ ] Create theme toggle component (file: `src/components/theme-toggle.tsx` - NEW)
-  - Sun/Moon icon toggle
+- [x] Create theme toggle component (file: `src/components/theme-toggle.tsx`)
+  - Sun/Moon icon toggle with Lucide icons
   - Accessible with aria-label
-  - Smooth transition between states
+  - Smooth transition between states (rotate + scale animation)
   - Acceptance: Clicking toggles theme immediately
 
 ### Prevent Flash of Wrong Theme
 
-- [ ] Add inline script to layout (file: `src/app/layout.tsx`)
-  - Add `<script>` before body content to set `dark` class immediately
+- [x] Add inline script to layout (file: `src/app/layout.tsx`)
+  - Add `<script>` with themeInitScript before body content
   - Add `suppressHydrationWarning` to `<html>` element
   - Acceptance: No flash of light theme when dark preferred
 
 ### CSS Variable Expansion
 
-- [ ] Expand CSS variables for theming (file: `src/app/globals.css`)
-  - Add variables for all surface colors, text colors, borders
-  - Use `dark:` variant throughout or CSS variable approach
-  - Color mapping:
-
-    ```
-    Light                 Dark
-    bg-white             bg-neutral-900
-    bg-neutral-50        bg-neutral-950
-    bg-neutral-100       bg-neutral-800
-    text-neutral-900     text-neutral-100
-    border-neutral-200   border-neutral-800
-    text-green-600       text-green-500
-    ```
-
+- [x] Expand CSS variables for theming (file: `src/app/globals.css`)
+  - Added variables: surface, surface-elevated, surface-sunken, border, border-strong, muted, muted-foreground, accent, destructive
+  - Class-based theming via .dark on html element
+  - Registered all in @theme inline block
   - Acceptance: All colors respond to theme change
 
 ### Update Components for Theming
 
-- [ ] Update home page (file: `src/app/page.tsx`)
+- [x] Update home page (file: `src/app/page.tsx`)
   - Add theme toggle to top-right corner
-  - Replace hardcoded dark colors with theme-aware classes
+  - Replace hardcoded dark colors with theme-aware CSS variables
   - Acceptance: Page looks good in both themes
 
-- [ ] Update room page (file: `src/app/room/[roomId]/page.tsx`)
-  - Replace hardcoded colors: `bg-neutral-900/30`, `bg-neutral-800`, `text-neutral-*`
-  - Update message bubbles for light mode visibility
+- [x] Update room page (file: `src/app/room/[roomId]/page.tsx`)
+  - Replace hardcoded colors with theme-aware CSS variables
+  - Add ThemeToggle to header
+  - Update message bubbles, input bar, skeletons for light mode
   - Acceptance: Chat readable in both themes
 
-- [ ] Update all components for theming
-  - `src/components/destruct-button.tsx`
-  - `src/components/destruct-modal.tsx`
-  - `src/components/expired-modal.tsx`
-  - `src/components/toast.tsx`
+- [x] Update all components for theming
+  - `src/components/destruct-button.tsx` - bg-surface-elevated, text-muted
+  - `src/components/destruct-modal.tsx` - bg-surface, border-border, text-foreground/muted
+  - `src/components/expired-modal.tsx` - bg-surface, border-border, text-foreground/muted
+  - `src/components/toast.tsx` - bg-surface-elevated, text-foreground/muted
   - Acceptance: All components theme-aware
 
 ---

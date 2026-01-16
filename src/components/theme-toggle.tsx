@@ -1,0 +1,44 @@
+"use client";
+
+import { useTheme } from "@/hooks/use-theme";
+import { Moon, Sun } from "lucide-react";
+
+/**
+ * Theme toggle button - switches between light and dark modes
+ * Uses a simple toggle pattern (no dropdown)
+ */
+export function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+    >
+      <Sun
+        className={`h-4 w-4 transition-all duration-200 ${
+          isDark
+            ? "rotate-90 scale-0 opacity-0"
+            : "rotate-0 scale-100 opacity-100"
+        } absolute`}
+      />
+      <Moon
+        className={`h-4 w-4 transition-all duration-200 ${
+          isDark
+            ? "rotate-0 scale-100 opacity-100"
+            : "-rotate-90 scale-0 opacity-0"
+        } absolute`}
+      />
+      <span className="sr-only">Toggle theme</span>
+    </button>
+  );
+}
+
+export default ThemeToggle;
