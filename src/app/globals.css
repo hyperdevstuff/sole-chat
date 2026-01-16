@@ -50,3 +50,8 @@ body {
 .animate-pulse-subtle {
     animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Safe area utilities for iOS notch/home indicator */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}

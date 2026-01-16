@@ -463,56 +463,59 @@ const Page = () => {
         onCreateNew={handleCreateNew}
         onClose={() => setShowExpiredModal(false)}
       />
-      <header className="relative border-b border-neutral-800 p-4 flex items-center justify-between bg-neutral-900/30">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <span className="text-xs text-neutral-500 uppercase">room id</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-green-500">{roomId}</span>
-              {status !== "connected" && (
-                <span
-                  className={`flex items-center gap-1.5 text-[10px] ${status === "error" ? "text-red-400" : "text-yellow-400"
-                    }`}
-                  title={status === "error" ? "Connection lost" : "Reconnecting..."}
-                >
+      <header className="relative border-b border-neutral-800 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0 bg-neutral-900/30">
+        <div className="flex items-center justify-between w-full sm:contents">
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <span className="text-xs text-neutral-500 uppercase">room id</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-green-500">{roomId}</span>
+                {status !== "connected" && (
                   <span
-                    className={`w-2 h-2 rounded-full ${status === "error" ? "bg-red-400" : "bg-yellow-400 animate-pulse-subtle"
+                    className={`flex items-center gap-1.5 text-[10px] ${status === "error" ? "text-red-400" : "text-yellow-400"
                       }`}
-                  />
-                  {status === "error" ? "Disconnected" : "Reconnecting"}
-                </span>
-              )}
-              <button
-                onClick={copyLink}
-                aria-label={copied ? "Room link copied to clipboard" : "Copy room link to clipboard"}
-                className="flex items-center gap-1.5 text-[10px] bg-neutral-800 hover:bg-neutral-700 px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
-              >
-                {copied ? (
-                  <ClipboardCheck size={12} />
-                ) : (
-                  <Clipboard size={12} />
+                    title={status === "error" ? "Connection lost" : "Reconnecting..."}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${status === "error" ? "bg-red-400" : "bg-yellow-400 animate-pulse-subtle"
+                        }`}
+                    />
+                    {status === "error" ? "Disconnected" : "Reconnecting"}
+                  </span>
                 )}
-                <span>{copied ? "COPIED" : "COPY"}</span>
-              </button>
+                <button
+                  onClick={copyLink}
+                  aria-label={copied ? "Room link copied to clipboard" : "Copy room link to clipboard"}
+                  className="flex items-center gap-1.5 text-[10px] bg-neutral-800 hover:bg-neutral-700 px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
+                >
+                  {copied ? (
+                    <ClipboardCheck size={12} />
+                  ) : (
+                    <Clipboard size={12} />
+                  )}
+                  <span>{copied ? "COPIED" : "COPY"}</span>
+                </button>
+              </div>
             </div>
           </div>
+
+          <button
+            onClick={handleExit}
+            aria-label="Exit room without destroying"
+            className="flex items-center gap-1.5 text-xs border border-neutral-800 hover:border-neutral-700 text-neutral-500 hover:text-neutral-300 px-3 py-2 rounded transition-colors cursor-pointer"
+            title="Leave room without destroying"
+          >
+            <LogOut size={14} />
+            <span>Exit</span>
+          </button>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
           <DestructButton
             timeRemaining={timeRemaining}
             onDestroy={handleDestroy}
           />
         </div>
-        <button
-          onClick={handleExit}
-          aria-label="Exit room without destroying"
-          className="flex items-center gap-1.5 text-xs border border-neutral-800 hover:border-neutral-700 text-neutral-500 hover:text-neutral-300 px-3 py-2 rounded transition-colors cursor-pointer"
-          title="Leave room without destroying"
-        >
-          <LogOut size={14} />
-          <span>Exit</span>
-        </button>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
         {isHistoryLoading ? (
@@ -535,7 +538,7 @@ const Page = () => {
                     {item.data.sender}
                   </span>
                   <div
-                    className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
+                    className={`max-w-[85%] sm:max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
                       ? "bg-green-600/20 text-green-100 border border-green-700/30"
                       : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
                       }`}
@@ -554,8 +557,8 @@ const Page = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t border-neutral-800 bg-neutral-900/30 ">
-        <div className="flex gap-4 ">
+      <div className="p-4 pb-[env(safe-area-inset-bottom)] border-t border-neutral-800 bg-neutral-900/30">
+        <div className="flex gap-2 sm:gap-4">
           <div className="flex-1 relative group text-wrap">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-pulse">
               {">"}
@@ -576,7 +579,7 @@ const Page = () => {
               placeholder={showExpiredModal ? "Room expired" : "Type Message..."}
               type="text"
               disabled={showExpiredModal}
-              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-sm text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-base text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           <button
@@ -589,7 +592,7 @@ const Page = () => {
               }
             }}
             disabled={!input.trim() || showExpiredModal}
-            className="bg-neutral-800 px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer "
+            className="bg-neutral-800 px-6 min-h-[44px] min-w-[44px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <SendIcon width={18}></SendIcon>
           </button>

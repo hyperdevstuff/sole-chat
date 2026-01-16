@@ -1,10 +1,154 @@
 # Implementation Plan
 
-**Updated:** 2026-01-16 (Planning Review)
+**Updated:** 2026-01-16 (Mobile & Theming Sprint)
 **Branch:** dev
-**Last Commit:** 13f6f25 fix: silent catch blocks
+**Last Commit:** ed2ba2d fix: correct createdAt type
 
-## Priority 1: Critical Bugs
+---
+
+## Priority 1: Mobile Responsiveness (Use frontend-ui-ux-engineer)
+
+### Header Layout Reorganization
+
+- [x] Fix cramped header on mobile (file: `src/app/room/[roomId]/page.tsx:466-516`)
+  - Current: All elements on one row with `absolute left-1/2` for DestructButton causing overlap
+  - Mobile layout: Stack into 2 rows (Room ID + Exit top, DestructButton below centered)
+  - Desktop (sm:): Restore single row layout
+  - Changes:
+    - Remove `absolute left-1/2 -translate-x-1/2` from DestructButton wrapper
+    - Use `flex-col sm:flex-row` for header
+    - Add `order-*` classes for mobile reordering
+  - Acceptance: All header elements visible and accessible on 375px viewport
+
+### DestructButton Responsive Sizing
+
+- [x] Reduce DestructButton width on mobile (file: `src/components/destruct-button.tsx:61`)
+  - Change `min-w-[180px]` to `min-w-[140px] sm:min-w-[180px]`
+  - Acceptance: Button fits in mobile header without overflow
+
+### Input Bar Mobile Improvements
+
+- [x] Improve input bar for mobile (file: `src/app/room/[roomId]/page.tsx:557-596`)
+  - Add safe area inset: `pb-[env(safe-area-inset-bottom)]` to container
+  - Reduce gap on mobile: `gap-2 sm:gap-4`
+  - Increase send button touch target: `min-h-[44px] min-w-[44px]`
+  - Use `text-base` on input to prevent iOS zoom (16px minimum)
+  - Acceptance: Input visible with keyboard open, proper touch targets
+
+### Message Bubbles Responsive
+
+- [x] Improve message bubble width on mobile (file: `src/app/room/[roomId]/page.tsx:537-544`)
+  - Change `max-w-[70%]` to `max-w-[85%] sm:max-w-[70%]`
+  - Acceptance: Better space utilization on narrow screens
+
+### Toast Container Fix
+
+- [x] Fix toast overflow on narrow screens (file: `src/hooks/use-toast.tsx:33`)
+  - Current: `right-4` without left protection causes overflow
+  - Change to: `left-4 right-4 sm:left-auto sm:right-4`
+  - Add: `mx-auto sm:mx-0` for mobile centering
+  - Acceptance: Toast visible and readable on 320px viewport
+
+### Safe Area Insets (iOS)
+
+- [x] Add safe area support (files: `src/app/globals.css`, `src/app/layout.tsx`)
+  - Add viewport meta with `viewportFit: 'cover'`
+  - Add CSS utility `.pb-safe { padding-bottom: env(safe-area-inset-bottom) }`
+  - Acceptance: No content hidden behind notch/home indicator
+
+---
+
+## Priority 2: Light/Dark Theming (Use frontend-ui-ux-engineer)
+
+### Theme Infrastructure
+
+- [ ] Create theme utilities (file: `src/lib/theme.ts` - NEW)
+  - Export `THEME_KEY = 'sole-chat-theme'`
+  - Export `type Theme = 'light' | 'dark' | 'system'`
+  - Export `getSystemTheme(): 'light' | 'dark'`
+  - Export `getStoredTheme(): Theme | null`
+  - Export `applyTheme(theme: Theme): void` - adds/removes `dark` class on `<html>`
+  - Acceptance: Clean separation of theme logic
+
+- [ ] Create theme hook (file: `src/hooks/use-theme.ts` - NEW)
+  - Return `{ theme, setTheme, resolvedTheme }`
+  - Listen to `prefers-color-scheme` changes
+  - Persist to localStorage
+  - Acceptance: React components can read/write theme
+
+- [ ] Create theme toggle component (file: `src/components/theme-toggle.tsx` - NEW)
+  - Sun/Moon icon toggle
+  - Accessible with aria-label
+  - Smooth transition between states
+  - Acceptance: Clicking toggles theme immediately
+
+### Prevent Flash of Wrong Theme
+
+- [ ] Add inline script to layout (file: `src/app/layout.tsx`)
+  - Add `<script>` before body content to set `dark` class immediately
+  - Add `suppressHydrationWarning` to `<html>` element
+  - Acceptance: No flash of light theme when dark preferred
+
+### CSS Variable Expansion
+
+- [ ] Expand CSS variables for theming (file: `src/app/globals.css`)
+  - Add variables for all surface colors, text colors, borders
+  - Use `dark:` variant throughout or CSS variable approach
+  - Color mapping:
+    ```
+    Light                 Dark
+    bg-white             bg-neutral-900
+    bg-neutral-50        bg-neutral-950
+    bg-neutral-100       bg-neutral-800
+    text-neutral-900     text-neutral-100
+    border-neutral-200   border-neutral-800
+    text-green-600       text-green-500
+    ```
+  - Acceptance: All colors respond to theme change
+
+### Update Components for Theming
+
+- [ ] Update home page (file: `src/app/page.tsx`)
+  - Add theme toggle to top-right corner
+  - Replace hardcoded dark colors with theme-aware classes
+  - Acceptance: Page looks good in both themes
+
+- [ ] Update room page (file: `src/app/room/[roomId]/page.tsx`)
+  - Replace hardcoded colors: `bg-neutral-900/30`, `bg-neutral-800`, `text-neutral-*`
+  - Update message bubbles for light mode visibility
+  - Acceptance: Chat readable in both themes
+
+- [ ] Update all components for theming
+  - `src/components/destruct-button.tsx`
+  - `src/components/destruct-modal.tsx`
+  - `src/components/expired-modal.tsx`
+  - `src/components/toast.tsx`
+  - Acceptance: All components theme-aware
+
+---
+
+## Priority 3: Polish & Testing
+
+### Visual Testing
+
+- [ ] Test on real devices / emulators
+  - iPhone SE (375px) - smallest common viewport
+  - iPhone 14 Pro (393px) - notch + dynamic island
+  - Pixel 7 (412px) - Android reference
+  - Acceptance: No layout issues on any device
+
+### Theme Persistence Testing
+
+- [ ] Verify theme persistence across sessions
+  - Set theme, refresh, verify it persists
+  - Clear localStorage, verify system preference used
+  - Acceptance: Theme choice remembered
+
+---
+
+## Previously Completed
+
+### Critical Bugs (All Fixed)
 
 ### Race Condition in Room Join
 
@@ -20,157 +164,39 @@
   - Added `leaving:{roomId}` cleanup
   - Acceptance: All Redis keys for room are deleted on destruction
 
-### Security: Token in Message History
+- [x] Fix cookie set before Lua script confirms join (file: `src/proxy.ts`)
+- [x] Fix DELETE route cleaning wrong key (commit: ad87430)
+- [x] Remove auth token from stored messages
+- [x] Clean up typingTimeoutRef on unmount
 
-- [x] Remove auth token from stored messages (file: `src/app/api/messages/index.ts:24`)
-  - Don't include `token` in the object pushed to Redis list
-  - Token should only be in request validation, not persisted
-  - Acceptance: Messages in Redis have no token field
+### Error Handling & Reliability (All Fixed)
 
-### Memory Leak in Chat Room
+- [x] Add proper error handling for realtime emit
+- [x] Handle Upstash Realtime disconnections with auto-reconnect
 
-- [x] Clean up typingTimeoutRef on unmount (file: `src/app/room/[roomId]/page.tsx:117-121`)
-  - Add clearTimeout in useEffect cleanup
-  - Acceptance: No dangling timeout references
+### UI/UX (All Fixed)
 
-## Priority 2: Error Handling & Reliability
+- [x] Add aria-labels to all buttons
+- [x] Add focus trap to modals
+- [x] Fix viewport height on mobile (svh units)
+- [x] Add skeleton loader for message history
+- [x] Improve typing indicator animation
 
-### Silent Error Handling
-
-- [x] Add proper error handling for realtime emit (file: `src/app/room/[roomId]/page.tsx:210`)
-  - Show toast on join emit failure
-  - Handle typing emit errors gracefully (only for typing=true to avoid spam)
-  - Acceptance: User sees error toast when emit fails
-
-### Connection Recovery
-
-- [x] Handle Upstash Realtime disconnections (providers.tsx, page.tsx)
-  - RealtimeProvider configured with maxReconnectAttempts={5}
-  - Upstash Realtime auto-handles exponential backoff internally
-  - Re-emits join event on successful reconnection
-  - Shows "Reconnecting" indicator and toasts for status changes
-  - Acceptance: Connection recovers after network blip
-
-## Priority 3: UI/UX Improvements (Use frontend-ui-ux-engineer)
-
-### Accessibility
-
-- [x] Add aria-labels to buttons (files: `src/app/page.tsx`, `src/components/*.tsx`)
-  - Moved exit button to rightmost position in header
-  - Added aria-labels to: Create Room, Join, Exit, Copy, Destroy, Send buttons
-  - Added aria-label to message input
-  - Acceptance: All interactive elements have accessible names
-
-- [x] Add focus trap to modals (files: `src/components/destruct-modal.tsx`, `expired-modal.tsx`)
-  - Created reusable `useFocusTrap` hook in `src/hooks/use-focus-trap.ts`
-  - Added aria-modal="true" and role="dialog" to both modals
-  - Tab cycles within modal, Shift+Tab cycles backwards
-  - Focus auto-set to first button, restored on close
-  - Added Escape key handling to ExpiredModal for consistency
-  - Acceptance: Tab key cycles within modal only
-
-### Mobile Responsiveness
-
-- [x] Fix viewport height on mobile (file: `src/app/room/[roomId]/page.tsx:412`)
-  - Changed `h-screen max-h-screen` to `h-svh max-h-svh` (small viewport height)
-  - Changed `min-h-screen` to `min-h-svh` in `src/app/page.tsx:53`
-  - Fixes iOS Safari address bar issue
-  - Acceptance: Chat fills viewport correctly on iOS
-
-### Loading States
-
-- [x] Add skeleton loader for message history (file: `src/app/room/[roomId]/page.tsx`)
-  - Created inline MessageSkeleton component with 4 animated placeholder bubbles
-  - Alternating left/right alignment to mimic conversation
-  - Uses animate-pulse for shimmer effect with bg-neutral-800
-  - Shows skeleton when historyQuery.isLoading is true
-  - Acceptance: Visual feedback during initial load
-
-### Typing Indicator Enhancement
-
-- [x] Improve typing indicator animation (file: `src/app/room/[roomId]/page.tsx`)
-  - Created TypingIndicator component with 3 bouncing dots
-  - Staggered animation delays (0s, 0.15s, 0.3s)
-  - Subtle container with bg-neutral-800/30 rounded-full
-  - Uses TailwindCSS animate-bounce with [animation-duration:1s]
-  - Acceptance: Smooth bouncing dot animation
-
-## Priority 4: Testing
-
-### Test Infrastructure Setup
+### Testing (All Fixed)
 
 - [x] Initialize Playwright for E2E tests
-  - Installed @playwright/test with TypeScript
-  - Created playwright.config.ts with Chromium only
-  - Added test:e2e and test:e2e:ui scripts to package.json
-  - Created tests/ directory with 4 E2E test files
-  - Note: Requires `bunx playwright install-deps` on fresh systems
-  - Acceptance: `bun run test:e2e` works (requires browser deps)
+- [x] Test room creation, 2-user limit, message delivery, room destruction
+- [x] Test Lua scripts in isolation (9 unit tests)
 
-### E2E Tests (Playwright)
+### Code Quality (All Fixed)
 
-- [x] Test room creation flow (file: `tests/room-creation.spec.ts`)
-  - Create room, verify URL generated, auto-copy works
-  - Acceptance: E2E test passes
+- [x] Remove console.log from proxy.ts
+- [x] Remove commented code
+- [x] Extract hardcoded constants to `src/lib/constants.ts`
+- [x] Review silent catch blocks
+- [x] Fix createdAt type inconsistency
 
-- [x] Test 2-user limit enforcement (file: `tests/user-limit.spec.ts`)
-  - User 1 joins, User 2 joins, User 3 should see "room full"
-  - Acceptance: Third user cannot join
-
-- [x] Test message delivery (file: `tests/message-delivery.spec.ts`)
-  - Send message, verify other user receives via realtime
-  - Acceptance: <100ms delivery verified
-
-- [x] Test room destruction (file: `tests/room-destruction.spec.ts`)
-  - Hold button 2s, verify both users redirected
-  - Acceptance: Room destroyed, Redis cleaned
-
-### Unit Tests
-
-- [x] Test Lua scripts in isolation (file: `src/lib/__tests__/lua-scripts.test.ts`)
-  - Created `src/lib/lua-scripts.ts` with exported JOIN_SCRIPT and LEAVE_SCRIPT
-  - 9 tests covering: empty room join, 1-user join, 2-user rejection, idempotent join
-  - Leave moves to leaving set, leave sets TTL, leave without connected
-  - Rejoin flow after leave, full integration test
-  - Acceptance: All edge cases covered
-
-## Priority 5: Code Quality
-
-### Debug Code Cleanup
-
-- [x] Remove console.log from proxy.ts (file: `src/proxy.ts:10`)
-  - Production code should not have debug logging
-  - Acceptance: No console.log in production code
-
-### Dead Code Removal
-
-- [x] Remove commented code in messages/index.ts (file: `src/app/api/messages/index.ts:28-29`)
-  - Clean up unused/commented code
-  - Acceptance: No commented-out code blocks
-
-### Constants Refactor
-
-- [x] Extract hardcoded constants to config (file: `src/lib/constants.ts`)
-  - Created constants for all TTL, timeout, and threshold values
-  - Updated rooms/index.ts, destruct-button.tsx, room page
-  - Acceptance: Single source of truth for magic numbers
-
-### Error Handling Audit
-
-- [x] Review silent catch blocks (files: multiple)
-  - Audited 5 catch blocks across 2 files
-  - Added console.warn to reconnection join emit
-  - Added toast feedback to copyLink() failure
-  - Acceptance: All catch blocks either log or notify
-
-## Priority 6: Type Safety (Discovered Issue)
-
-### createdAt Type Inconsistency
-
-- [x] Fix type mismatch between proxy.ts and rooms/index.ts (files: `src/proxy.ts:11`, `src/app/api/rooms/index.ts:29`)
-  - Changed proxy.ts to type createdAt as `string` (matches Redis storage)
-  - rooms/index.ts already correct with `string` type and parseInt parsing
-  - Acceptance: Consistent typing across files
+---
 
 ## Future Enhancements
 
@@ -198,12 +224,7 @@
   - Empty state component
   - Acceptance: Consistent UI, reduced duplication
 
-### Mobile UX Improvements
-
-- [ ] Improve mobile ergonomics for DestructButton
-  - Current: Hold-to-destroy may be awkward on mobile
-  - Consider: Alternative mobile gesture or confirmation flow
-  - Acceptance: User testing confirms usability
+---
 
 ## Completed
 
