@@ -21,15 +21,10 @@ export const messages = new Elysia({ prefix: "/messages" })
         timeStamp: Date.now(),
         roomId,
       };
-      await redis.rpush(`messages:${roomId}`, {
-        ...message,
-        token: auth.token,
-      });
-      await realtime.channel(roomId).emit("chat.message", message);
+      await redis.rpush(`messages:${roomId}`, message);
+      await realtime.channel(`chat:${roomId}`).emit("chat.message", message);
       const remaining = await redis.ttl(`meta:${roomId}`);
       await redis.expire(`messages:${roomId}`, remaining);
-      // await redis.expire(`history:${roomId}`, remaining);
-      // await redis.expire(roomId, remaining);
     },
     {
       query: t.Object({
@@ -38,6 +33,25 @@ export const messages = new Elysia({ prefix: "/messages" })
       body: t.Object({
         sender: t.String({ maxLength: 100 }),
         text: t.String({ maxLength: 1000 }),
+      }),
+    },
+  )
+  .get(
+    "/",
+    async ({ auth }) => {
+      const { roomId } = auth;
+      const [rawMessages, ttl] = await Promise.all([
+        redis.lrange(`messages:${roomId}`, 0, -1),
+        redis.ttl(`meta:${roomId}`),
+      ]);
+      const messages: Message[] = rawMessages.map((msg) =>
+        typeof msg === "string" ? JSON.parse(msg) : msg
+      );
+      return { messages, ttl: ttl > 0 ? ttl : 0 };
+    },
+    {
+      query: t.Object({
+        roomId: t.String(),
       }),
     },
   );
