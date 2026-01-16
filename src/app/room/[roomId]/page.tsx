@@ -5,6 +5,12 @@ import { ExpiredModal } from "@/components/expired-modal";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
+import {
+  TYPING_TIMEOUT_MS,
+  COPY_FEEDBACK_MS,
+  WARNING_THRESHOLD_60S,
+  WARNING_THRESHOLD_10S,
+} from "@/lib/constants";
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message, RealtimeEvents } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -156,7 +162,7 @@ const Page = () => {
   // Warning toasts
   useEffect(() => {
     if (timeRemaining === null) return;
-    if (timeRemaining <= 60 && timeRemaining > 10 && !warned60) {
+    if (timeRemaining <= WARNING_THRESHOLD_60S && timeRemaining > WARNING_THRESHOLD_10S && !warned60) {
       setWarned60(true);
       toast({
         message: "Room expires in 1 minute",
@@ -164,7 +170,7 @@ const Page = () => {
         action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
     }
-    if (timeRemaining <= 10 && !warned10) {
+    if (timeRemaining <= WARNING_THRESHOLD_10S && !warned10) {
       setWarned10(true);
       toast({
         message: "Room expires in 10 seconds!",
@@ -288,7 +294,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
+    const timer = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
     return () => clearTimeout(timer);
   }, [copied]);
 
@@ -333,7 +339,7 @@ const Page = () => {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     if (e.target.value.trim()) {
       emitTyping(true);
-      typingTimeoutRef.current = setTimeout(() => emitTyping(false), 2000);
+      typingTimeoutRef.current = setTimeout(() => emitTyping(false), TYPING_TIMEOUT_MS);
     } else {
       emitTyping(false);
     }

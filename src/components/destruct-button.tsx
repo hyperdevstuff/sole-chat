@@ -1,4 +1,5 @@
 "use client";
+import { DESTROY_HOLD_MS } from "@/lib/constants";
 import { useEffect, useRef, useState } from "react";
 
 const formatTimeRemaining = (seconds: number) => {
@@ -24,7 +25,7 @@ export function DestructButton({
     setIsHolding(true);
     holdTimerRef.current = setTimeout(() => {
       handleDestroy();
-    }, 2000);
+    }, DESTROY_HOLD_MS);
   };
 
   const cancelHold = () => {
@@ -71,7 +72,7 @@ export function DestructButton({
             ? "inset(0px 0px 0px 0px)"
             : "inset(0px 100% 0px 0px)",
           transition: isHolding
-            ? "clip-path 2s linear"
+            ? `clip-path ${DESTROY_HOLD_MS}ms linear`
             : "clip-path 200ms ease-out",
         }}
       >

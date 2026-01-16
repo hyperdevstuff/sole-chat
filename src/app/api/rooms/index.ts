@@ -1,12 +1,14 @@
 import { redis } from "@/lib/redis";
 import { realtime } from "@/lib/realtime";
 import { LEAVE_SCRIPT } from "@/lib/lua-scripts";
+import {
+  ROOM_TTL_SECONDS,
+  MAX_SESSION_AGE_SECONDS,
+  LEAVE_GRACE_TTL_SECONDS,
+} from "@/lib/constants";
 import Elysia, { t } from "elysia";
 import { nanoid } from "nanoid";
 import { authMiddleware } from "../[[...slugs]]/auth";
-
-const ROOM_TTL_SECONDS: number = 60 * 10; // 10 mins
-const MAX_SESSION_AGE_SECONDS: number = 60 * 60 * 24 * 7; // 7 days
 
 export const rooms = new Elysia({ prefix: "/rooms" })
   .post("/create", async () => {
@@ -91,11 +93,10 @@ export const rooms = new Elysia({ prefix: "/rooms" })
       const { roomId } = params;
       if (auth.roomId !== roomId) throw new Error("Unauthorized");
 
-      const GRACE_TTL = 30;
       await redis.eval(
         LEAVE_SCRIPT,
         [`connected:${roomId}`, `leaving:${roomId}`],
-        [auth.token, GRACE_TTL.toString()],
+        [auth.token, LEAVE_GRACE_TTL_SECONDS.toString()],
       );
 
       await realtime.channel(`chat:${roomId}`).emit("chat.leave", {

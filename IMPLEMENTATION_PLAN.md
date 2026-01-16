@@ -169,10 +169,9 @@
 
 ### Constants Refactor
 
-- [ ] Extract hardcoded constants to config (files: multiple)
-  - TTL values (10 min room, 30s grace period)
-  - Typing timeout (2s)
-  - Create `src/lib/constants.ts`
+- [x] Extract hardcoded constants to config (files: multiple)
+  - Created `src/lib/constants.ts` with all TTL, timeout, and threshold values
+  - Updated `src/app/api/rooms/index.ts`, `src/components/destruct-button.tsx`, `src/app/room/[roomId]/page.tsx`
   - Acceptance: Single source of truth for magic numbers
 
 ### Error Handling Audit
