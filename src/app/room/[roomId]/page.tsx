@@ -250,7 +250,9 @@ const Page = () => {
               event: "chat.join",
               data: { username, timestamp: Date.now() },
             }),
-          }).catch(() => { });
+          }).catch((err) => {
+            console.warn("Failed to re-emit join on reconnection:", err);
+          });
         }
       } else {
         toast({ message: "Connected to chat.", type: "success" });
@@ -363,6 +365,7 @@ const Page = () => {
       setCopied(true);
     } catch (err) {
       console.error("clipboard fail:", err);
+      toast({ message: "Failed to copy link. Try again.", type: "error" });
     }
   };
 

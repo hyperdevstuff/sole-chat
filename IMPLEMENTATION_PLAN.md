@@ -176,9 +176,11 @@
 
 ### Error Handling Audit
 
-- [ ] Review silent catch blocks (files: multiple)
-  - Some catch blocks swallow errors silently
-  - Add proper logging or user feedback
+- [x] Review silent catch blocks (files: multiple)
+  - Audited 5 catch blocks across 2 files
+  - Added console.warn to reconnection join emit (page.tsx:253)
+  - Added toast feedback to copyLink() failure (page.tsx:364)
+  - Other catches are intentional (URL parsing fallback, typing emit comment)
   - Acceptance: All catch blocks either log or notify
 
 ### Future: Heartbeat System
