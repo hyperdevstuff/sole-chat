@@ -39,13 +39,13 @@ export function DestructModal({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        className="relative bg-surface border border-border rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
+        className="relative bg-neutral-900 border border-neutral-800 rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-foreground mb-2">
+        <h2 className="text-lg font-semibold text-neutral-100 mb-2">
           Destroy Room?
         </h2>
-        <p className="text-sm text-muted mb-6">
+        <p className="text-sm text-neutral-400 mb-6">
           This action cannot be undone. All messages will be permanently deleted.
         </p>
 
@@ -69,7 +69,7 @@ export function DestructModal({
         <button
           onClick={onClose}
           aria-label="Cancel and return to chat"
-          className="w-full mt-4 py-2 text-muted hover:text-foreground text-sm transition-colors cursor-pointer"
+          className="w-full mt-4 py-2 text-neutral-500 hover:text-neutral-300 text-sm transition-colors cursor-pointer"
         >
           Cancel
         </button>

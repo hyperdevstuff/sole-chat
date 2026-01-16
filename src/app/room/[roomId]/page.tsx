@@ -22,20 +22,20 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const MessageSkeleton = () => (
   <div className="w-full space-y-4 py-2">
     <div className="flex flex-col items-start animate-pulse">
-      <div className="h-3 w-16 bg-surface-elevated rounded mb-1 opacity-50" />
-      <div className="h-10 w-48 bg-surface-elevated/50 rounded-lg rounded-tl-none" />
+      <div className="h-3 w-16 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-10 w-48 bg-neutral-800/50 rounded-lg rounded-tl-none" />
     </div>
     <div className="flex flex-col items-end animate-pulse">
-      <div className="h-3 w-16 bg-surface-elevated rounded mb-1 opacity-50" />
-      <div className="h-12 w-64 bg-surface-elevated/30 rounded-lg rounded-tr-none" />
+      <div className="h-3 w-16 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-12 w-64 bg-neutral-800/30 rounded-lg rounded-tr-none" />
     </div>
     <div className="flex flex-col items-start animate-pulse">
-      <div className="h-3 w-20 bg-surface-elevated rounded mb-1 opacity-50" />
-      <div className="h-14 w-56 bg-surface-elevated/50 rounded-lg rounded-tl-none" />
+      <div className="h-3 w-20 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-14 w-56 bg-neutral-800/50 rounded-lg rounded-tl-none" />
     </div>
     <div className="flex flex-col items-end animate-pulse">
-      <div className="h-3 w-14 bg-surface-elevated rounded mb-1 opacity-50" />
-      <div className="h-10 w-40 bg-surface-elevated/30 rounded-lg rounded-tr-none" />
+      <div className="h-3 w-14 bg-neutral-800 rounded mb-1 opacity-50" />
+      <div className="h-10 w-40 bg-neutral-800/30 rounded-lg rounded-tr-none" />
     </div>
   </div>
 );
@@ -54,11 +54,11 @@ const formatRelativeTime = (timestamp: number, now: number) => {
 
 const TypingIndicator = ({ username }: { username: string }) => (
   <div className="flex items-center gap-2 mb-2">
-    <span className="text-xs text-muted italic">{username} is typing</span>
-    <div className="flex items-center gap-1 bg-surface-elevated/30 rounded-full px-2 py-1 h-5">
-      <div className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0s' }} />
-      <div className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.15s' }} />
-      <div className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.3s' }} />
+    <span className="text-xs text-neutral-500 italic">{username} is typing</span>
+    <div className="flex items-center gap-1 bg-neutral-800/30 rounded-full px-2 py-1 h-5">
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0s' }} />
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.15s' }} />
+      <div className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce [animation-duration:1s]" style={{ animationDelay: '0.3s' }} />
     </div>
   </div>
 );
@@ -451,7 +451,7 @@ const Page = () => {
   }, [router]);
 
   return (
-    <main className="flex flex-col h-svh max-h-svh overflow-hidden bg-background text-foreground">
+    <main className="flex flex-col h-svh max-h-svh overflow-hidden">
       <DestructModal
         isOpen={showDestructModal}
         onClose={() => setShowDestructModal(false)}
@@ -464,13 +464,13 @@ const Page = () => {
         onCreateNew={handleCreateNew}
         onClose={() => setShowExpiredModal(false)}
       />
-      <header className="relative border-b border-border p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0 bg-surface/30">
+      <header className="relative border-b border-neutral-800 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0 bg-neutral-900/30">
         <div className="flex items-center justify-between w-full sm:contents">
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
-              <span className="text-xs text-muted uppercase">room id</span>
+              <span className="text-xs text-neutral-500 uppercase">room id</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-accent">{roomId}</span>
+                <span className="font-bold text-green-500">{roomId}</span>
                 {status !== "connected" && (
                   <span
                     className={`flex items-center gap-1.5 text-[10px] ${status === "error" ? "text-red-400" : "text-yellow-400"
@@ -487,7 +487,7 @@ const Page = () => {
                 <button
                   onClick={copyLink}
                   aria-label={copied ? "Room link copied to clipboard" : "Copy room link to clipboard"}
-                  className="flex items-center gap-1.5 text-[10px] bg-surface-elevated hover:bg-border px-2 py-1 rounded text-muted hover:text-foreground transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-[10px] bg-neutral-800 hover:bg-neutral-700 px-2 py-1 rounded text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
                 >
                   {copied ? (
                     <ClipboardCheck size={12} />
@@ -505,7 +505,7 @@ const Page = () => {
             <button
               onClick={handleExit}
               aria-label="Exit room without destroying"
-              className="flex items-center gap-1.5 text-xs border border-border hover:border-border-strong text-muted hover:text-foreground px-3 py-2 rounded transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs border border-neutral-800 hover:border-neutral-700 text-neutral-500 hover:text-neutral-300 px-3 py-2 rounded transition-colors cursor-pointer"
               title="Leave room without destroying"
             >
               <LogOut size={14} />
@@ -531,25 +531,25 @@ const Page = () => {
             .map((item) =>
               item.type === 'system' ? (
                 <div key={item.data.id} className="flex justify-center animate-fade-in">
-                  <span className="text-xs text-muted italic">{item.data.text}</span>
+                  <span className="text-xs text-neutral-500 italic">{item.data.text}</span>
                 </div>
               ) : (
                 <div
                   key={item.data.id}
                   className={`flex flex-col ${item.data.sender === username ? "items-end" : "items-start"}`}
                 >
-                  <span className="text-xs text-muted mb-1">
+                  <span className="text-xs text-neutral-500 mb-1">
                     {item.data.sender}
                   </span>
                   <div
                     className={`max-w-[85%] sm:max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
-                      ? "bg-accent/20 text-foreground border border-accent/30"
-                      : "bg-surface-elevated text-foreground border border-border"
+                      ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                      : "bg-neutral-800 text-neutral-100 border border-neutral-700/30"
                       }`}
                   >
                     {item.data.text}
                   </div>
-                  <span className="text-xs text-muted mt-1 opacity-75">
+                  <span className="text-xs text-neutral-500 mt-1 opacity-75">
                     {formatRelativeTime(item.data.timeStamp, now)}
                   </span>
                 </div>
@@ -561,10 +561,10 @@ const Page = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 pb-[env(safe-area-inset-bottom)] border-t border-border bg-surface/30">
+      <div className="p-4 pb-[env(safe-area-inset-bottom)] border-t border-neutral-800 bg-neutral-900/30">
         <div className="flex gap-2 sm:gap-4">
           <div className="flex-1 relative group text-wrap">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-accent animate-pulse">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-pulse">
               {">"}
             </span>
             <input
@@ -583,7 +583,7 @@ const Page = () => {
               placeholder={showExpiredModal ? "Room expired" : "Type Message..."}
               type="text"
               disabled={showExpiredModal}
-              className="w-full bg-surface-sunken border border-border focus:border-border-strong focus:outline-none transition-colors text-foreground placeholder:text-muted-foreground py-3 pl-8 pr-4 text-base text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-black border border-neutral-800 focus:border-neutral-700 focus:outline-none transition-colors text-neutral-100 placeholder:text-neutral-700 py-3 pl-8 pr-4 text-base text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           <button
@@ -596,7 +596,7 @@ const Page = () => {
               }
             }}
             disabled={!input.trim() || showExpiredModal}
-            className="bg-surface-elevated px-6 min-h-[44px] min-w-[44px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:bg-border"
+            className="bg-neutral-800 px-6 min-h-[44px] min-w-[44px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <SendIcon width={18}></SendIcon>
           </button>

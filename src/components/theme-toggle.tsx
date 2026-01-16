@@ -3,17 +3,19 @@
 import { useTheme } from "@/hooks/use-theme";
 import { Moon, Sun } from "lucide-react";
 
-/**
- * Theme toggle button - switches between light and dark modes
- * Uses a simple toggle pattern (no dropdown)
- */
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme, mounted } = useTheme();
   const isDark = resolvedTheme === "dark";
 
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
   };
+
+  if (!mounted) {
+    return (
+      <div className="h-8 w-8 rounded-lg bg-neutral-800 animate-pulse" />
+    );
+  }
 
   return (
     <button

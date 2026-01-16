@@ -105,17 +105,16 @@
   - Replace hardcoded dark colors with theme-aware CSS variables
   - Acceptance: Page looks good in both themes
 
-- [x] Update room page (file: `src/app/room/[roomId]/page.tsx`)
-  - Replace hardcoded colors with theme-aware CSS variables
-  - Add ThemeToggle to header
-  - Update message bubbles, input bar, skeletons for light mode
+- [ ] Update room page (file: `src/app/room/[roomId]/page.tsx`)
+  - Replace hardcoded colors: `bg-neutral-900/30`, `bg-neutral-800`, `text-neutral-*`
+  - Update message bubbles for light mode visibility
   - Acceptance: Chat readable in both themes
 
-- [x] Update all components for theming
-  - `src/components/destruct-button.tsx` - bg-surface-elevated, text-muted
-  - `src/components/destruct-modal.tsx` - bg-surface, border-border, text-foreground/muted
-  - `src/components/expired-modal.tsx` - bg-surface, border-border, text-foreground/muted
-  - `src/components/toast.tsx` - bg-surface-elevated, text-foreground/muted
+- [ ] Update all components for theming
+  - `src/components/destruct-button.tsx`
+  - `src/components/destruct-modal.tsx`
+  - `src/components/expired-modal.tsx`
+  - `src/components/toast.tsx`
   - Acceptance: All components theme-aware
 
 ---
@@ -136,6 +135,22 @@
   - Set theme, refresh, verify it persists
   - Clear localStorage, verify system preference used
   - Acceptance: Theme choice remembered
+
+### Scroll Behavior (UX)
+
+- [ ] Handle "user scrolled up" case for new messages
+  - Current: Auto-scrolls regardless of user position
+  - Solution: Track scroll position, show "new messages" indicator when scrolled up
+  - Only auto-scroll if user is at bottom (within threshold)
+  - Acceptance: User scroll position preserved, badge shows new message count
+
+### Reusable UI Components (DX)
+
+- [ ] Extract common UI patterns to shared components
+  - Button component (variants: primary, secondary, danger)
+  - Input component with consistent styling
+  - Empty state component
+  - Acceptance: Consistent UI, reduced duplication
 
 ---
 
@@ -201,21 +216,6 @@
   - Consider: WebSocket ping/pong or periodic /api/heartbeat calls
   - Acceptance: Zombie slots freed within 60s
 
-### Scroll Behavior (UX)
-
-- [ ] Handle "user scrolled up" case for new messages
-  - Current: Auto-scrolls regardless of user position
-  - Solution: Track scroll position, show "new messages" indicator when scrolled up
-  - Only auto-scroll if user is at bottom (within threshold)
-  - Acceptance: User scroll position preserved, badge shows new message count
-
-### Reusable UI Components (DX)
-
-- [ ] Extract common UI patterns to shared components
-  - Button component (variants: primary, secondary, danger)
-  - Input component with consistent styling
-  - Empty state component
-  - Acceptance: Consistent UI, reduced duplication
 
 ---
 
