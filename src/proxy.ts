@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "./lib/redis";
 import { nanoid } from "nanoid";
+import { JOIN_SCRIPT } from "./lib/lua-scripts";
 
 export const proxy = async (req: NextRequest) => {
   const pathname = req.nextUrl.pathname;
@@ -33,14 +34,7 @@ export const proxy = async (req: NextRequest) => {
 
   // Atomic join: only add if room has < 2 users
   const joined = await redis.eval(
-    `
-    local count = redis.call('SCARD', KEYS[1])
-    if count >= 2 then
-      return 0
-    end
-    redis.call('SADD', KEYS[1], ARGV[1])
-    return 1
-    `,
+    JOIN_SCRIPT,
     [`connected:${roomId}`],
     [token],
   );

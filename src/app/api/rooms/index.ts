@@ -1,5 +1,6 @@
 import { redis } from "@/lib/redis";
 import { realtime } from "@/lib/realtime";
+import { LEAVE_SCRIPT } from "@/lib/lua-scripts";
 import Elysia, { t } from "elysia";
 import { nanoid } from "nanoid";
 import { authMiddleware } from "../[[...slugs]]/auth";
@@ -92,12 +93,7 @@ export const rooms = new Elysia({ prefix: "/rooms" })
 
       const GRACE_TTL = 30;
       await redis.eval(
-        `
-        redis.call('SREM', KEYS[1], ARGV[1])
-        redis.call('SADD', KEYS[2], ARGV[1])
-        redis.call('EXPIRE', KEYS[2], ARGV[2])
-        return 1
-        `,
+        LEAVE_SCRIPT,
         [`connected:${roomId}`, `leaving:${roomId}`],
         [auth.token, GRACE_TTL.toString()],
       );

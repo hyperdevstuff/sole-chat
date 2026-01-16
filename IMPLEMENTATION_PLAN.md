@@ -127,9 +127,14 @@
 
 ### Unit Tests
 
-- [ ] Test Lua scripts in isolation
-  - Join script with 0, 1, 2 users
-  - Leave script with grace period
+- [x] Test Lua scripts in isolation (commit: pending)
+  - Created `src/lib/lua-scripts.ts` with exported JOIN_SCRIPT and LEAVE_SCRIPT
+  - Created `src/lib/__tests__/lua-scripts.test.ts` with 9 tests
+  - Test cases: empty room join, 1-user join, 2-user rejection, idempotent join
+  - Test cases: leave moves to leaving set, leave sets TTL, leave without connected
+  - Test cases: rejoin flow after leave, full integration (join/join/reject/leave/join)
+  - Updated proxy.ts and rooms/index.ts to use extracted Lua scripts
+  - Added `bun test src` for unit tests, installed @types/bun
   - Acceptance: All edge cases covered
 
 ## Completed
