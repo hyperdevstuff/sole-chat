@@ -62,13 +62,14 @@
 
 ### Theme Infrastructure
 
-- [ ] Create theme utilities (file: `src/lib/theme.ts` - NEW)
+- [x] Create theme utilities (file: `src/lib/theme.ts`)
   - Export `THEME_KEY = 'sole-chat-theme'`
   - Export `type Theme = 'light' | 'dark' | 'system'`
   - Export `getSystemTheme(): 'light' | 'dark'`
   - Export `getStoredTheme(): Theme | null`
   - Export `applyTheme(theme: Theme): void` - adds/removes `dark` class on `<html>`
-  - Acceptance: Clean separation of theme logic
+  - Also exports: `setStoredTheme()`, `resolveTheme()`, `themeInitScript`
+  - Acceptance: Clean separation of theme logic ✓
 
 - [ ] Create theme hook (file: `src/hooks/use-theme.ts` - NEW)
   - Return `{ theme, setTheme, resolvedTheme }`
@@ -95,6 +96,7 @@
   - Add variables for all surface colors, text colors, borders
   - Use `dark:` variant throughout or CSS variable approach
   - Color mapping:
+
     ```
     Light                 Dark
     bg-white             bg-neutral-900
@@ -104,6 +106,7 @@
     border-neutral-200   border-neutral-800
     text-green-600       text-green-500
     ```
+
   - Acceptance: All colors respond to theme change
 
 ### Update Components for Theming
