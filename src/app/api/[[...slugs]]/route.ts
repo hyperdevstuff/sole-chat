@@ -39,6 +39,8 @@ export type App = typeof App;
 
 export const GET = App.handle;
 export const POST = App.handle;
+export const PATCH = App.handle;
+export const DELETE = App.handle;
 
 function isNextJsInternalError(error: unknown): boolean {
 	if (typeof error !== "object" || error === null || !("digest" in error)) {

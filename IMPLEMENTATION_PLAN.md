@@ -1,189 +1,168 @@
 # Implementation Plan
 
-**Updated:** 2026-01-16 (Mobile & Theming Sprint)
+**Updated:** 2026-01-17 (Planning Review)
 **Branch:** dev
-**Last Commit:** ed2ba2d fix: correct createdAt type
+**Last Commit:** 1b4a702 fix: resolve hydration mismatch in ThemeToggle and restore green theming
 
 ---
 
-## Priority 1: Mobile Responsiveness (Use frontend-ui-ux-engineer)
+## Priority 1: Complete Theming (Use frontend-ui-ux-engineer)
 
-### Header Layout Reorganization
+### Room Page Theme Migration
 
-- [x] Fix cramped header on mobile (file: `src/app/room/[roomId]/page.tsx:466-516`)
-  - Current: All elements on one row with `absolute left-1/2` for DestructButton causing overlap
-  - Mobile layout: Stack into 2 rows (Room ID + Exit top, DestructButton below centered)
-  - Desktop (sm:): Restore single row layout
-  - Changes:
-    - Remove `absolute left-1/2 -translate-x-1/2` from DestructButton wrapper
-    - Use `flex-col sm:flex-row` for header
-    - Add `order-*` classes for mobile reordering
-  - Acceptance: All header elements visible and accessible on 375px viewport
+- [ ] Update room page colors (file: `src/app/room/[roomId]/page.tsx`)
+  - Replace `bg-neutral-900/30` with `bg-surface/30` for header/footer
+  - Replace `bg-neutral-800` with `bg-surface-elevated` for received messages
+  - Replace `border-neutral-800` with `border-border` throughout
+  - Replace `text-neutral-*` with `text-muted` / `text-muted-foreground`
+  - Update input: `bg-black` -> `bg-surface-sunken`, border colors
+  - Update skeleton loader colors
+  - Acceptance: Chat readable in both light and dark themes
 
-### DestructButton Responsive Sizing
+### Component Theme Migration
 
-- [x] Reduce DestructButton width on mobile (file: `src/components/destruct-button.tsx:61`)
-  - Change `min-w-[180px]` to `min-w-[140px] sm:min-w-[180px]`
-  - Acceptance: Button fits in mobile header without overflow
+- [ ] Update destruct-button.tsx (file: `src/components/destruct-button.tsx:61-69`)
+  - Replace `bg-neutral-800` with `bg-surface-elevated`
+  - Replace `text-neutral-300` with `text-foreground`
+  - Keep `bg-red-900` for destruction overlay (semantic color)
+  - Acceptance: Button visible in both themes
 
-### Input Bar Mobile Improvements
+- [ ] Update destruct-modal.tsx (file: `src/components/destruct-modal.tsx:37-42`)
+  - Replace `bg-neutral-900` with `bg-surface-elevated`
+  - Replace `border-neutral-800` with `border-border`
+  - Replace `text-neutral-400` with `text-muted`
+  - Keep `bg-black/80` for overlay (intentional dimming)
+  - Acceptance: Modal readable in both themes
 
-- [x] Improve input bar for mobile (file: `src/app/room/[roomId]/page.tsx:557-596`)
-  - Add safe area inset: `pb-[env(safe-area-inset-bottom)]` to container
-  - Reduce gap on mobile: `gap-2 sm:gap-4`
-  - Increase send button touch target: `min-h-[44px] min-w-[44px]`
-  - Use `text-base` on input to prevent iOS zoom (16px minimum)
-  - Acceptance: Input visible with keyboard open, proper touch targets
+- [ ] Update expired-modal.tsx (file: `src/components/expired-modal.tsx`)
+  - Same pattern as destruct-modal
+  - Acceptance: Modal readable in both themes
 
-### Message Bubbles Responsive
-
-- [x] Improve message bubble width on mobile (file: `src/app/room/[roomId]/page.tsx:537-544`)
-  - Change `max-w-[70%]` to `max-w-[85%] sm:max-w-[70%]`
-  - Acceptance: Better space utilization on narrow screens
-
-### Toast Container Fix
-
-- [x] Fix toast overflow on narrow screens (file: `src/hooks/use-toast.tsx:33`)
-  - Current: `right-4` without left protection causes overflow
-  - Change to: `left-4 right-4 sm:left-auto sm:right-4`
-  - Add: `mx-auto sm:mx-0` for mobile centering
-  - Acceptance: Toast visible and readable on 320px viewport
-
-### Safe Area Insets (iOS)
-
-- [x] Add safe area support (files: `src/app/globals.css`, `src/app/layout.tsx`)
-  - Add viewport meta with `viewportFit: 'cover'`
-  - Add CSS utility `.pb-safe { padding-bottom: env(safe-area-inset-bottom) }`
-  - Acceptance: No content hidden behind notch/home indicator
+- [ ] Update toast.tsx (file: `src/components/toast.tsx`)
+  - Replace `text-neutral-200/400` with `text-foreground/muted`
+  - Replace `bg-neutral-800` action button with `bg-surface-elevated`
+  - Keep semantic status colors (red/emerald/blue/amber)
+  - Acceptance: Toast visible in both themes
 
 ---
 
-## Priority 2: Light/Dark Theming (Use frontend-ui-ux-engineer)
+## Priority 2: Scroll Behavior UX
 
-### Theme Infrastructure
+### Scroll Position Preservation
 
-- [x] Create theme utilities (file: `src/lib/theme.ts`)
-  - Export `THEME_KEY = 'sole-chat-theme'`
-  - Export `type Theme = 'light' | 'dark' | 'system'`
-  - Export `getSystemTheme(): 'light' | 'dark'`
-  - Export `getStoredTheme(): Theme | null`
-  - Export `applyTheme(theme: Theme): void` - adds/removes `dark` class on `<html>`
-  - Also exports: `setStoredTheme()`, `resolveTheme()`, `themeInitScript`
-  - Acceptance: Clean separation of theme logic ✓
+- [ ] Add scroll position tracking (file: `src/app/room/[roomId]/page.tsx`)
+  - Add `containerRef` to scrollable message div (line ~522)
+  - Add `isAtBottom` state with threshold detection (50px)
+  - Add `onScroll` handler to update `isAtBottom`
+  - Acceptance: State correctly reflects user scroll position
 
-- [x] Create theme hook (file: `src/hooks/use-theme.ts`)
-  - Return `{ theme, setTheme, resolvedTheme }`
-  - Listen to `prefers-color-scheme` changes via useSyncExternalStore
-  - Persist to localStorage
-  - Acceptance: React components can read/write theme
+- [ ] Implement conditional auto-scroll (file: `src/app/room/[roomId]/page.tsx:273-275`)
+  - Only scroll to bottom if `isAtBottom === true`
+  - OR if the new message was sent by current user
+  - Acceptance: User scroll position preserved when reading history
 
-- [x] Create theme toggle component (file: `src/components/theme-toggle.tsx`)
-  - Sun/Moon icon toggle with Lucide icons
-  - Accessible with aria-label
-  - Smooth transition between states (rotate + scale animation)
-  - Acceptance: Clicking toggles theme immediately
+### New Messages Indicator
 
-### Prevent Flash of Wrong Theme
+- [ ] Add unread message counter (file: `src/app/room/[roomId]/page.tsx`)
+  - Add `unreadCount` state
+  - Increment when message arrives AND `!isAtBottom`
+  - Reset to 0 when user scrolls to bottom
+  - Acceptance: Counter accurately tracks unread messages
 
-- [x] Add inline script to layout (file: `src/app/layout.tsx`)
-  - Add `<script>` with themeInitScript before body content
-  - Add `suppressHydrationWarning` to `<html>` element
-  - Acceptance: No flash of light theme when dark preferred
-
-### CSS Variable Expansion
-
-- [x] Expand CSS variables for theming (file: `src/app/globals.css`)
-  - Added variables: surface, surface-elevated, surface-sunken, border, border-strong, muted, muted-foreground, accent, destructive
-  - Class-based theming via .dark on html element
-  - Registered all in @theme inline block
-  - Acceptance: All colors respond to theme change
-
-### Update Components for Theming
-
-- [x] Update home page (file: `src/app/page.tsx`)
-  - Add theme toggle to top-right corner
-  - Replace hardcoded dark colors with theme-aware CSS variables
-  - Acceptance: Page looks good in both themes
-
-- [ ] Update room page (file: `src/app/room/[roomId]/page.tsx`)
-  - Replace hardcoded colors: `bg-neutral-900/30`, `bg-neutral-800`, `text-neutral-*`
-  - Update message bubbles for light mode visibility
-  - Acceptance: Chat readable in both themes
-
-- [ ] Update all components for theming
-  - `src/components/destruct-button.tsx`
-  - `src/components/destruct-modal.tsx`
-  - `src/components/expired-modal.tsx`
-  - `src/components/toast.tsx`
-  - Acceptance: All components theme-aware
+- [ ] Add floating "New Messages" badge (file: `src/app/room/[roomId]/page.tsx`)
+  - Show when `unreadCount > 0 && !isAtBottom`
+  - Display count (e.g., "3 new messages")
+  - Click scrolls to bottom and resets counter
+  - Use theme-aware styling (bg-accent, text-accent-foreground)
+  - Acceptance: Badge visible, clickable, disappears on scroll
 
 ---
 
-## Priority 3: Polish & Testing
+## Priority 3: Code Quality & DX
+
+### Reusable UI Components
+
+- [ ] Create Button component (file: `src/components/ui/button.tsx`)
+  - Variants: primary, secondary, danger, ghost
+  - Sizes: sm, md, lg
+  - Theme-aware using CSS variables
+  - Acceptance: Reduces duplication in page.tsx and room page
+
+- [ ] Create Input component (file: `src/components/ui/input.tsx`)
+  - Consistent focus/disabled states
+  - Theme-aware styling
+  - Acceptance: Consistent input styling across app
+
+- [ ] Refactor existing buttons to use Button component
+  - Home page create/join buttons
+  - Room page send button, exit button
+  - Modal action buttons
+  - Acceptance: No inline button styling in page files
+
+### Uncommitted Work
+
+- [ ] Review and commit current changes
+  - `src/app/room/[roomId]/page.tsx` - Mobile header improvements
+  - `src/app/api/[[...slugs]]/route.ts` - API query param fixes
+  - Acceptance: Clean git state with descriptive commit
+
+---
+
+## Priority 4: Testing & Verification
 
 ### Visual Testing
 
-- [ ] Test on real devices / emulators
-  - iPhone SE (375px) - smallest common viewport
-  - iPhone 14 Pro (393px) - notch + dynamic island
+- [ ] Test on mobile viewports
+  - iPhone SE (375px) - smallest common
+  - iPhone 14 Pro (393px) - notch/dynamic island
   - Pixel 7 (412px) - Android reference
   - Acceptance: No layout issues on any device
 
-### Theme Persistence Testing
+- [ ] Test theme switching
+  - Verify all components respond to theme change
+  - Verify persistence across page refresh
+  - Verify system preference detection
+  - Acceptance: Seamless light/dark switching
 
-- [ ] Verify theme persistence across sessions
-  - Set theme, refresh, verify it persists
-  - Clear localStorage, verify system preference used
-  - Acceptance: Theme choice remembered
+### E2E Test Coverage
 
-### Scroll Behavior (UX)
-
-- [ ] Handle "user scrolled up" case for new messages
-  - Current: Auto-scrolls regardless of user position
-  - Solution: Track scroll position, show "new messages" indicator when scrolled up
-  - Only auto-scroll if user is at bottom (within threshold)
-  - Acceptance: User scroll position preserved, badge shows new message count
-
-### Reusable UI Components (DX)
-
-- [ ] Extract common UI patterns to shared components
-  - Button component (variants: primary, secondary, danger)
-  - Input component with consistent styling
-  - Empty state component
-  - Acceptance: Consistent UI, reduced duplication
+- [ ] Add theme toggle E2E test
+  - Toggle theme, verify localStorage update
+  - Refresh page, verify theme persists
+  - Acceptance: Theme persistence works reliably
 
 ---
 
 ## Previously Completed
 
+### Mobile Responsiveness (All Complete)
+- [x] Fix cramped header on mobile (commit: 0778cc3)
+- [x] Reduce DestructButton width on mobile
+- [x] Improve input bar for mobile (safe area, touch targets)
+- [x] Improve message bubble width on mobile
+- [x] Fix toast overflow on narrow screens
+- [x] Add safe area support for iOS
+
+### Theme Infrastructure (All Complete)
+- [x] Create theme utilities (src/lib/theme.ts)
+- [x] Create theme hook (src/hooks/use-theme.ts)
+- [x] Create theme toggle component
+- [x] Add flash prevention inline script
+- [x] Expand CSS variables in globals.css
+- [x] Update home page for theming (commit: fda3f64)
+- [x] Fix hydration mismatch in ThemeToggle (commit: 1b4a702)
+
 ### Critical Bugs (All Fixed)
-
-### Race Condition in Room Join
-
-- [x] Fix cookie set before Lua script confirms join (file: `src/proxy.ts:32-59`)
-  - Move cookie setting AFTER Lua script returns 1 (success)
-  - If Lua returns 0 (room full), return 403 without setting cookie
-  - Acceptance: User cannot have auth cookie if not in connected set
-
-### Redis Key Mismatch in Room Deletion
-
-- [x] Fix DELETE route cleaning wrong key (commit: ad87430)
-  - Changed `users:{roomId}` to `connected:{roomId}`
-  - Added `leaving:{roomId}` cleanup
-  - Acceptance: All Redis keys for room are deleted on destruction
-
-- [x] Fix cookie set before Lua script confirms join (file: `src/proxy.ts`)
-- [x] Fix DELETE route cleaning wrong key (commit: ad87430)
+- [x] Fix cookie set before Lua script confirms join
+- [x] Fix DELETE route cleaning wrong key
 - [x] Remove auth token from stored messages
 - [x] Clean up typingTimeoutRef on unmount
 
-### Error Handling & Reliability (All Fixed)
-
+### Error Handling (All Fixed)
 - [x] Add proper error handling for realtime emit
 - [x] Handle Upstash Realtime disconnections with auto-reconnect
 
 ### UI/UX (All Fixed)
-
 - [x] Add aria-labels to all buttons
 - [x] Add focus trap to modals
 - [x] Fix viewport height on mobile (svh units)
@@ -191,16 +170,14 @@
 - [x] Improve typing indicator animation
 
 ### Testing (All Fixed)
-
 - [x] Initialize Playwright for E2E tests
 - [x] Test room creation, 2-user limit, message delivery, room destruction
 - [x] Test Lua scripts in isolation (9 unit tests)
 
 ### Code Quality (All Fixed)
-
 - [x] Remove console.log from proxy.ts
 - [x] Remove commented code
-- [x] Extract hardcoded constants to `src/lib/constants.ts`
+- [x] Extract hardcoded constants to src/lib/constants.ts
 - [x] Review silent catch blocks
 - [x] Fix createdAt type inconsistency
 
@@ -209,47 +186,28 @@
 ## Future Enhancements
 
 ### Heartbeat System (Reliability)
-
 - [ ] Implement heartbeat for zombie connection detection
-  - Current: beforeunload is unreliable (doesn't fire on mobile/crash)
-  - Solution: Periodic ping from client, server-side timeout tracking
-  - Consider: WebSocket ping/pong or periodic /api/heartbeat calls
+  - Current: beforeunload is unreliable (mobile/crash)
+  - Solution: Periodic ping, server-side timeout tracking
   - Acceptance: Zombie slots freed within 60s
 
-
 ---
-
-## Completed
-
-- [x] Room creation with unique ID (commit: initial)
-- [x] Realtime messaging with Upstash (commit: initial)
-- [x] Hold-to-destroy pattern - 2s hold time (commit: initial)
-- [x] Anonymous usernames - anon-{adjective}-{nanoid(4)} (commit: initial)
-- [x] Join system messages (commit: initial)
-- [x] Typing indicators (commit: initial)
-- [x] TTL warnings with keep-alive button (commit: initial)
-- [x] Export chat on destruct (commit: initial)
-- [x] Leave/rejoin with 30s grace period (commit: efed18b)
-- [x] Exit button (commit: efed18b)
-- [x] Connection status indicator (commit: initial)
-- [x] Room expired modal (commit: initial)
-- [x] Connection recovery with auto-reconnection and re-join
 
 ## Blocked
 
 _None currently_
 
+---
+
 ## Notes
 
 ### Key Decisions
-
 - Elysia over Next.js API routes (better DX, Eden treaty client)
 - Upstash Realtime over raw WebSocket (managed, scales automatically)
-- 30s grace period for leave/rejoin (balance between UX and slot availability)
-- beforeunload is unreliable - server-side heartbeat may be needed for production
+- 30s grace period for leave/rejoin (balance UX and slot availability)
+- Class-based theming via `.dark` on `<html>` element
 
 ### Redis Key Schema
-
 ```
 connected:{roomId}  - SET of auth tokens (max 2)
 leaving:{roomId}    - SET of tokens in grace period
@@ -257,37 +215,33 @@ meta:{roomId}       - HASH with creator info
 messages:{roomId}   - LIST of messages
 ```
 
-### Patterns Discovered
-
-- Hold-to-destroy uses clip-path animation for visual feedback
-- TTL refreshed on every message send
-- All realtime events defined with Zod in `src/lib/realtime.ts`
-- Message deduplication by ID on client side
-- TypingIndicator uses staggered bounce animation
-
-### Test Coverage Summary
-
-| Area | Coverage | Notes |
-|------|----------|-------|
-| Lua scripts | High | 9 unit tests, edge cases covered |
-| E2E flows | High | 4 test files covering core flows |
-| API integration | None | No dedicated API tests |
-| React hooks | None | No unit tests for hooks |
-| Error boundaries | None | No error boundary tests |
-
-### Risks
-
-- No heartbeat = can't detect zombie connections
-- beforeunload doesn't always fire (mobile, crash)
-- E2E tests require live Upstash Redis
-- Consider server-side connection tracking for production
+### CSS Variable Mapping
+| Variable | Light | Dark | Usage |
+|----------|-------|------|-------|
+| `--surface` | #f5f5f5 | #171717 | Card backgrounds |
+| `--surface-elevated` | #ffffff | #262626 | Buttons, modals |
+| `--surface-sunken` | #e5e5e5 | #0a0a0a | Input backgrounds |
+| `--border` | #e5e5e5 | #262626 | Default borders |
+| `--muted` | #737373 | #a3a3a3 | Secondary text |
 
 ### Tool Usage
-
 | Task | Tool |
 |------|------|
-| UI changes | `frontend-ui-ux-engineer` agent (MANDATORY) |
+| UI/Visual changes | `frontend-ui-ux-engineer` agent (MANDATORY) |
 | E2E tests | Playwriter MCP |
 | API docs | Context7 (`/upstash/realtime`, `/elysiajs/elysia`) |
 | Debug | Chrome DevTools MCP |
 | Examples | Exa web search |
+
+### Test Coverage Summary
+| Area | Coverage | Notes |
+|------|----------|-------|
+| Lua scripts | High | 9 unit tests |
+| E2E flows | High | 4 test files |
+| API integration | None | No dedicated tests |
+| React hooks | None | No unit tests |
+
+### Risks
+- No heartbeat = can't detect zombie connections
+- beforeunload doesn't always fire (mobile, crash)
+- E2E tests require live Upstash Redis
