@@ -58,7 +58,7 @@ export function DestructButton({
       onMouseUp={cancelHold}
       onTouchStart={startHold}
       onTouchEnd={cancelHold}
-      className="relative flex h-10 items-center gap-2 rounded-full bg-neutral-800 px-8 font-medium text-neutral-300 select-none transition-transform cursor-pointer min-w-[140px] sm:min-w-[180px] justify-center"
+      className="relative flex h-10 items-center gap-2 rounded-full bg-surface-elevated px-8 font-medium text-foreground select-none transition-transform cursor-pointer min-w-[140px] sm:min-w-[180px] justify-center"
       style={{
         transform: isHolding ? "scale(0.97)" : "scale(1)",
       }}
