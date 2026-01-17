@@ -50,30 +50,30 @@
 
 ### Scroll Position Preservation
 
-- [ ] Add scroll position tracking (file: `src/app/room/[roomId]/page.tsx`)
-  - Add `containerRef` to scrollable message div (line ~522)
-  - Add `isAtBottom` state with threshold detection (50px)
-  - Add `onScroll` handler to update `isAtBottom`
+- [x] Add scroll position tracking (commit: pending)
+  - Added `messagesContainerRef` to scrollable message div
+  - Added `isAtBottom` state with 50px threshold detection
+  - Added `onScroll` handler to update `isAtBottom`
   - Acceptance: State correctly reflects user scroll position
 
-- [ ] Implement conditional auto-scroll (file: `src/app/room/[roomId]/page.tsx:273-275`)
-  - Only scroll to bottom if `isAtBottom === true`
-  - OR if the new message was sent by current user
+- [x] Implement conditional auto-scroll (commit: pending)
+  - Only scrolls to bottom if `isAtBottom === true`
+  - Increments unread counter for messages from other users when not at bottom
   - Acceptance: User scroll position preserved when reading history
 
 ### New Messages Indicator
 
-- [ ] Add unread message counter (file: `src/app/room/[roomId]/page.tsx`)
-  - Add `unreadCount` state
-  - Increment when message arrives AND `!isAtBottom`
-  - Reset to 0 when user scrolls to bottom
+- [x] Add unread message counter (commit: pending)
+  - Added `unreadCount` state
+  - Increments when message arrives AND `!isAtBottom` AND not from current user
+  - Resets to 0 when user scrolls to bottom
   - Acceptance: Counter accurately tracks unread messages
 
-- [ ] Add floating "New Messages" badge (file: `src/app/room/[roomId]/page.tsx`)
-  - Show when `unreadCount > 0 && !isAtBottom`
-  - Display count (e.g., "3 new messages")
+- [x] Add floating "New Messages" badge (commit: pending)
+  - Shows when `unreadCount > 0 && !isAtBottom`
+  - Displays count (e.g., "3 new messages")
   - Click scrolls to bottom and resets counter
-  - Use theme-aware styling (bg-accent, text-accent-foreground)
+  - Uses green accent styling with shadow
   - Acceptance: Badge visible, clickable, disappears on scroll
 
 ---

@@ -85,7 +85,10 @@ const Page = () => {
   const hasEmittedJoin = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevStatusRef = useRef<string | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Fetch initial message history
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
@@ -103,6 +106,23 @@ const Page = () => {
   });
 
   const historyMessages = historyData?.messages ?? [];
+
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const SCROLL_THRESHOLD_PX = 50;
+    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < SCROLL_THRESHOLD_PX;
+    setIsAtBottom(atBottom);
+    if (atBottom) {
+      setUnreadCount(0);
+    }
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setUnreadCount(0);
+    setIsAtBottom(true);
+  }, []);
 
   const { mutate: keepAlive } = useMutation({
     mutationFn: async () => {
@@ -193,7 +213,11 @@ const Page = () => {
       channel: string;
     }) => {
       if (payload.event === "chat.message") {
-        setRealtimeMessages((prev) => [...prev, payload.data as Message]);
+        const newMessage = payload.data as Message;
+        setRealtimeMessages((prev) => [...prev, newMessage]);
+        if (!isAtBottom && newMessage.sender !== username) {
+          setUnreadCount((prev) => prev + 1);
+        }
       } else if (payload.event === "chat.destroy") {
         router.push("/");
       } else if (payload.event === "chat.typing") {
@@ -224,7 +248,7 @@ const Page = () => {
         }
       }
     },
-    [router, username],
+    [router, username, isAtBottom],
   );
 
   const { status } = useRealtime({
@@ -271,8 +295,10 @@ const Page = () => {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, systemMessages]);
+    if (isAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, systemMessages, isAtBottom]);
 
   useEffect(() => {
     if (hasEmittedJoin.current || !username) return;
@@ -519,7 +545,11 @@ const Page = () => {
           </button>
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin relative"
+      >
         {isHistoryLoading ? (
           <MessageSkeleton />
         ) : (
@@ -558,6 +588,28 @@ const Page = () => {
           <TypingIndicator username={typingUser} />
         )}
         <div ref={messagesEndRef} />
+        {unreadCount > 0 && !isAtBottom && (
+          <button
+            onClick={scrollToBottom}
+            aria-label={`${unreadCount} new message${unreadCount > 1 ? "s" : ""} - click to scroll down`}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg transition-all animate-fade-in cursor-pointer flex items-center gap-2"
+          >
+            <span>{unreadCount} new message{unreadCount > 1 ? "s" : ""}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        )}
       </div>
       <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border bg-surface/30">
         <div className="flex gap-2 sm:gap-4">
