@@ -2,7 +2,7 @@
 
 **Updated:** 2026-01-17 (Building Mode)
 **Branch:** dev
-**Last Commit:** 7154c01 refactor: migrate modal and toast components to theme tokens
+**Last Commit:** aca2235 feat: add smart scroll with unread message indicator
 
 ---
 
@@ -50,26 +50,26 @@
 
 ### Scroll Position Preservation
 
-- [x] Add scroll position tracking (commit: pending)
+- [x] Add scroll position tracking (commit: aca2235)
   - Added `messagesContainerRef` to scrollable message div
   - Added `isAtBottom` state with 50px threshold detection
   - Added `onScroll` handler to update `isAtBottom`
   - Acceptance: State correctly reflects user scroll position
 
-- [x] Implement conditional auto-scroll (commit: pending)
+- [x] Implement conditional auto-scroll (commit: aca2235)
   - Only scrolls to bottom if `isAtBottom === true`
   - Increments unread counter for messages from other users when not at bottom
   - Acceptance: User scroll position preserved when reading history
 
 ### New Messages Indicator
 
-- [x] Add unread message counter (commit: pending)
+- [x] Add unread message counter (commit: aca2235)
   - Added `unreadCount` state
   - Increments when message arrives AND `!isAtBottom` AND not from current user
   - Resets to 0 when user scrolls to bottom
   - Acceptance: Counter accurately tracks unread messages
 
-- [x] Add floating "New Messages" badge (commit: pending)
+- [x] Add floating "New Messages" badge (commit: aca2235)
   - Shows when `unreadCount > 0 && !isAtBottom`
   - Displays count (e.g., "3 new messages")
   - Click scrolls to bottom and resets counter
