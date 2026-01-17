@@ -1,8 +1,8 @@
 # Implementation Plan
 
-**Updated:** 2026-01-17 (Planning Review)
+**Updated:** 2026-01-17 (Building Mode)
 **Branch:** dev
-**Last Commit:** 1b4a702 fix: resolve hydration mismatch in ThemeToggle and restore green theming
+**Last Commit:** 7154c01 refactor: migrate modal and toast components to theme tokens
 
 ---
 
@@ -10,35 +10,35 @@
 
 ### Room Page Theme Migration
 
-- [ ] Update room page colors (file: `src/app/room/[roomId]/page.tsx`)
-  - Replace `bg-neutral-900/30` with `bg-surface/30` for header/footer
-  - Replace `bg-neutral-800` with `bg-surface-elevated` for received messages
-  - Replace `border-neutral-800` with `border-border` throughout
-  - Replace `text-neutral-*` with `text-muted` / `text-muted-foreground`
-  - Update input: `bg-black` -> `bg-surface-sunken`, border colors
-  - Update skeleton loader colors
-  - Acceptance: Chat readable in both light and dark themes
+- [x] Update room page colors (file: `src/app/room/[roomId]/page.tsx`) - ALREADY DONE
+  - Uses `bg-surface/30` for header/footer
+  - Uses `bg-surface-elevated` for received messages
+  - Uses `border-border` throughout
+  - Uses `text-muted` / `text-foreground` appropriately
+  - Uses `bg-surface-sunken` for input
+  - Skeleton loader uses theme tokens
+  - Acceptance: Chat readable in both light and dark themes ✓
 
 ### Component Theme Migration
 
-- [ ] Update destruct-button.tsx (file: `src/components/destruct-button.tsx:61-69`)
+- [x] Update destruct-button.tsx (commit: 7154c01)
   - Replace `bg-neutral-800` with `bg-surface-elevated`
   - Replace `text-neutral-300` with `text-foreground`
   - Keep `bg-red-900` for destruction overlay (semantic color)
   - Acceptance: Button visible in both themes
 
-- [ ] Update destruct-modal.tsx (file: `src/components/destruct-modal.tsx:37-42`)
+- [x] Update destruct-modal.tsx (commit: 7154c01)
   - Replace `bg-neutral-900` with `bg-surface-elevated`
   - Replace `border-neutral-800` with `border-border`
   - Replace `text-neutral-400` with `text-muted`
   - Keep `bg-black/80` for overlay (intentional dimming)
   - Acceptance: Modal readable in both themes
 
-- [ ] Update expired-modal.tsx (file: `src/components/expired-modal.tsx`)
+- [x] Update expired-modal.tsx (commit: 7154c01)
   - Same pattern as destruct-modal
   - Acceptance: Modal readable in both themes
 
-- [ ] Update toast.tsx (file: `src/components/toast.tsx`)
+- [x] Update toast.tsx (commit: 7154c01)
   - Replace `text-neutral-200/400` with `text-foreground/muted`
   - Replace `bg-neutral-800` action button with `bg-surface-elevated`
   - Keep semantic status colors (red/emerald/blue/amber)
