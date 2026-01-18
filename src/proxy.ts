@@ -40,7 +40,7 @@ export const proxy = async (req: NextRequest) => {
   );
 
   // If room is full, redirect WITHOUT setting any cookie
-  if (!joined) return NextResponse.redirect(new URL("/?error=room-full"));
+  if (!joined) return NextResponse.redirect(new URL("/?error=room-full", req.url));
 
   // Only set cookie AFTER Lua script confirms successful join
   const response = NextResponse.next();
