@@ -18,16 +18,14 @@ Current implementation uses `nanoid()` which generates 21-character URL-safe IDs
 
 ### BLOCKER: No End-to-End Encryption (E2EE)
 
-The app has **zero encryption**. Messages are stored as plaintext in Redis and transmitted in cleartext via Upstash Realtime.
+The app now has full E2EE. Messages are encrypted client-side before sending to Redis.
 
-- [ ] Implement client-side E2EE for messages
-  - Generate keypair on room creation (Web Crypto API or tweetnacl)
-  - Key exchange mechanism when second user joins
-  - Encrypt messages before sending, decrypt on receive
-  - Store only ciphertext in Redis
-  - File changes: `src/app/room/[roomId]/page.tsx`, `src/lib/crypto.ts` (new)
-  - Acceptance: Messages unreadable in Redis, only participants can decrypt
-  - **Estimated effort**: 1-2 days (significant feature)
+- [x] Implement client-side E2EE for messages
+  - ECDH P-256 keypair generation (Web Crypto API)
+  - Key exchange: creator stores publicKey on room creation, joiner fetches and derives shared key
+  - AES-GCM 256-bit encryption for messages
+  - Only ciphertext stored in Redis
+  - Files: `src/lib/crypto.ts`, `src/hooks/use-e2ee.ts`, `src/app/room/[roomId]/page.tsx`
 
 - [ ] Add E2EE tests
   - Unit tests for encrypt/decrypt functions

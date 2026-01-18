@@ -17,15 +17,75 @@ const generateRoomId = customAlphabet(
 import { authMiddleware } from "../[[...slugs]]/auth";
 
 export const rooms = new Elysia({ prefix: "/rooms" })
-  .post("/create", async () => {
-    const roomId = generateRoomId();
-    await redis.hset(`meta:${roomId}`, {
-      createdAt: Date.now(),
-    });
-    await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
-    return { roomId };
-  })
+  .post(
+    "/create",
+    async ({ body }) => {
+      const roomId = generateRoomId();
+      const roomData: Record<string, string | number> = {
+        createdAt: Date.now(),
+      };
+      if (body?.publicKey) {
+        roomData.creatorPublicKey = body.publicKey;
+      }
+      await redis.hset(`meta:${roomId}`, roomData);
+      await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
+      return { roomId };
+    },
+    {
+      body: t.Optional(
+        t.Object({
+          publicKey: t.Optional(t.String()),
+        })
+      ),
+    }
+  )
   .use(authMiddleware)
+  .get(
+    "/:roomId/keys",
+    async ({ params, auth }) => {
+      const { roomId } = params;
+      if (auth.roomId !== roomId) throw new Error("Unauthorized");
+      const meta = await redis.hgetall<{ creatorPublicKey?: string; joinerPublicKey?: string }>(
+        `meta:${roomId}`
+      );
+      if (!meta) throw new Error("Room not found");
+      return {
+        creatorPublicKey: meta.creatorPublicKey ?? null,
+        joinerPublicKey: meta.joinerPublicKey ?? null,
+      };
+    },
+    {
+      params: t.Object({
+        roomId: t.String(),
+      }),
+    }
+  )
+  .put(
+    "/:roomId/keys",
+    async ({ params, auth, body }) => {
+      const { roomId } = params;
+      if (auth.roomId !== roomId) throw new Error("Unauthorized");
+      const meta = await redis.hgetall<{ creatorPublicKey?: string }>(
+        `meta:${roomId}`
+      );
+      if (!meta) throw new Error("Room not found");
+      await redis.hset(`meta:${roomId}`, { joinerPublicKey: body.publicKey });
+      await realtime.channel(`chat:${roomId}`).emit("chat.keyExchange", {
+        publicKey: body.publicKey,
+        username: body.username,
+      });
+      return { success: true };
+    },
+    {
+      params: t.Object({
+        roomId: t.String(),
+      }),
+      body: t.Object({
+        publicKey: t.String(),
+        username: t.String(),
+      }),
+    }
+  )
   .patch(
     "/:roomId",
     async ({ params, auth }) => {

@@ -4,6 +4,7 @@ import { DestructModal } from "@/components/destruct-modal";
 import { ExpiredModal } from "@/components/expired-modal";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
+import { useE2EE } from "@/hooks/use-e2ee";
 import { api } from "@/lib/client";
 import {
   TYPING_TIMEOUT_MS,
@@ -89,6 +90,12 @@ const Page = () => {
   const prevStatusRef = useRef<string | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+
+  const { status: e2eeStatus, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
+    roomId,
+    username,
+  });
 
   // Fetch initial message history
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
@@ -207,16 +214,26 @@ const Page = () => {
   );
 
   const handleRealtimeData = useCallback(
-    (payload: {
-      event: "chat.message" | "chat.destroy" | "chat.typing" | "chat.join" | "chat.leave";
-      data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean } | { username: string; timestamp: number };
+    async (payload: {
+      event: "chat.message" | "chat.destroy" | "chat.typing" | "chat.join" | "chat.leave" | "chat.keyExchange";
+      data: Message | { isDestroyed: true } | { sender: string; isTyping: boolean } | { username: string; timestamp: number } | { publicKey: string; username: string };
       channel: string;
     }) => {
       if (payload.event === "chat.message") {
         const newMessage = payload.data as Message;
         setRealtimeMessages((prev) => [...prev, newMessage]);
+        if (e2eeStatus === "ready") {
+          const decrypted = await decryptMessage(newMessage.text);
+          setDecryptedMessages((prev) => ({ ...prev, [newMessage.id]: decrypted }));
+        }
         if (!isAtBottom && newMessage.sender !== username) {
           setUnreadCount((prev) => prev + 1);
+        }
+      } else if (payload.event === "chat.keyExchange") {
+        const keyData = payload.data as { publicKey: string; username: string };
+        if (keyData.username !== username) {
+          handleKeyExchange(keyData.publicKey);
+          toast({ message: "Secure connection established.", type: "success" });
         }
       } else if (payload.event === "chat.destroy") {
         router.push("/");
@@ -248,12 +265,12 @@ const Page = () => {
         }
       }
     },
-    [router, username, isAtBottom],
+    [router, username, isAtBottom, e2eeStatus, decryptMessage, handleKeyExchange, toast],
   );
 
   const { status } = useRealtime({
     channels: [`chat:${roomId}`],
-    events: ["chat.message", "chat.destroy", "chat.typing", "chat.join", "chat.leave"],
+    events: ["chat.message", "chat.destroy", "chat.typing", "chat.join", "chat.leave", "chat.keyExchange"],
     onData: handleRealtimeData,
   });
 
@@ -299,6 +316,22 @@ const Page = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, systemMessages, isAtBottom]);
+
+  useEffect(() => {
+    if (e2eeStatus !== "ready" || messages.length === 0) return;
+    const decryptAll = async () => {
+      const newDecrypted: Record<string, string> = {};
+      for (const msg of messages) {
+        if (!decryptedMessages[msg.id]) {
+          newDecrypted[msg.id] = await decryptMessage(msg.text);
+        }
+      }
+      if (Object.keys(newDecrypted).length > 0) {
+        setDecryptedMessages((prev) => ({ ...prev, ...newDecrypted }));
+      }
+    };
+    decryptAll();
+  }, [e2eeStatus, messages, decryptMessage, decryptedMessages]);
 
   useEffect(() => {
     if (hasEmittedJoin.current || !username) return;
@@ -376,8 +409,9 @@ const Page = () => {
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
+      const encryptedText = e2eeStatus === "ready" ? await encryptMessage(text) : text;
       await api.messages.post(
-        { sender: username, text },
+        { sender: username, text: encryptedText },
         { query: { roomId } },
       );
     },
@@ -575,7 +609,7 @@ const Page = () => {
                       : "bg-surface-elevated text-foreground border border-border/30"
                       }`}
                   >
-                    {item.data.text}
+                    {decryptedMessages[item.data.id] ?? item.data.text}
                   </div>
                   <span className="text-xs text-muted mt-1 opacity-75">
                     {formatRelativeTime(item.data.timeStamp, now)}

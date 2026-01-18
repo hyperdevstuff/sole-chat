@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
+import { generateKeyPair, exportPublicKey, storePrivateKey } from "@/lib/crypto";
 import { useMutation } from "@tanstack/react-query";
 import "nanoid";
 import { useRouter } from "next/navigation";
@@ -17,9 +18,12 @@ function App() {
 
   const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
-      const res = await api.rooms.create.post();
+      const keyPair = await generateKeyPair();
+      const publicKey = await exportPublicKey(keyPair.publicKey);
+      const res = await api.rooms.create.post({ publicKey });
       if (res.status === 200 && res.data?.roomId) {
         const newRoomId = res.data.roomId;
+        storePrivateKey(newRoomId, keyPair.privateKey);
         const roomUrl = `${window.location.origin}/room/${newRoomId}`;
         
         await navigator.clipboard.writeText(roomUrl);

@@ -1,0 +1,120 @@
+"use client";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { api } from "@/lib/client";
+import {
+  generateKeyPair,
+  exportPublicKey,
+  importPublicKey,
+  deriveSharedKey,
+  encrypt,
+  decrypt,
+  storePrivateKey,
+  getPrivateKey,
+} from "@/lib/crypto";
+
+type E2EEStatus = "initializing" | "waiting" | "ready" | "error";
+
+interface UseE2EEOptions {
+  roomId: string;
+  username: string;
+  onKeyExchange?: (publicKey: string, username: string) => void;
+}
+
+export function useE2EE({ roomId, username, onKeyExchange }: UseE2EEOptions) {
+  const [status, setStatus] = useState<E2EEStatus>("initializing");
+  const [error, setError] = useState<string | null>(null);
+  const sharedKeyRef = useRef<CryptoKey | null>(null);
+  const privateKeyRef = useRef<CryptoKey | null>(null);
+  const isCreatorRef = useRef<boolean | null>(null);
+  const initRef = useRef(false);
+
+  useEffect(() => {
+    if (initRef.current || !roomId || !username) return;
+    initRef.current = true;
+
+    const init = async () => {
+      try {
+        const existingPrivateKey = getPrivateKey(roomId);
+        const keysRes = await api.rooms({ roomId }).keys.get();
+        if (keysRes.error) throw new Error("Failed to fetch keys");
+
+        const { creatorPublicKey, joinerPublicKey } = keysRes.data as {
+          creatorPublicKey: string | null;
+          joinerPublicKey: string | null;
+        };
+
+        if (existingPrivateKey) {
+          isCreatorRef.current = true;
+          privateKeyRef.current = existingPrivateKey;
+
+          if (joinerPublicKey) {
+            const peerKey = await importPublicKey(joinerPublicKey);
+            sharedKeyRef.current = await deriveSharedKey(existingPrivateKey, peerKey);
+            setStatus("ready");
+          } else {
+            setStatus("waiting");
+          }
+        } else {
+          isCreatorRef.current = false;
+          const keyPair = await generateKeyPair();
+          privateKeyRef.current = keyPair.privateKey;
+          storePrivateKey(roomId, keyPair.privateKey);
+          const myPublicKey = await exportPublicKey(keyPair.publicKey);
+
+          if (creatorPublicKey) {
+            const peerKey = await importPublicKey(creatorPublicKey);
+            sharedKeyRef.current = await deriveSharedKey(keyPair.privateKey, peerKey);
+            await api.rooms({ roomId }).keys.put({ publicKey: myPublicKey, username });
+            setStatus("ready");
+          } else {
+            setStatus("error");
+            setError("Room creator key not found");
+          }
+        }
+      } catch (err) {
+        setStatus("error");
+        setError(err instanceof Error ? err.message : "E2EE initialization failed");
+      }
+    };
+
+    init();
+  }, [roomId, username]);
+
+  const handleKeyExchange = useCallback(
+    async (peerPublicKey: string) => {
+      if (!privateKeyRef.current || sharedKeyRef.current) return;
+      try {
+        const peerKey = await importPublicKey(peerPublicKey);
+        sharedKeyRef.current = await deriveSharedKey(privateKeyRef.current, peerKey);
+        setStatus("ready");
+      } catch (err) {
+        setStatus("error");
+        setError("Key exchange failed");
+      }
+    },
+    []
+  );
+
+  const encryptMessage = useCallback(async (plaintext: string): Promise<string> => {
+    if (!sharedKeyRef.current) return plaintext;
+    return encrypt(plaintext, sharedKeyRef.current);
+  }, []);
+
+  const decryptMessage = useCallback(async (ciphertext: string): Promise<string> => {
+    if (!sharedKeyRef.current) return ciphertext;
+    try {
+      return await decrypt(ciphertext, sharedKeyRef.current);
+    } catch {
+      return "[Decryption failed]";
+    }
+  }, []);
+
+  return {
+    status,
+    error,
+    isCreator: isCreatorRef.current,
+    encryptMessage,
+    decryptMessage,
+    handleKeyExchange,
+  };
+}
