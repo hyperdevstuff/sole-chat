@@ -121,23 +121,20 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 
 ### 2.3 Light Mode Polish
 
-- [ ] Audit message bubbles for light mode
-  - Current green bubbles optimized for dark mode
-  - Ensure sufficient contrast in light mode
+- [x] Audit message bubbles for light mode
+  - Fixed: Own messages now use `bg-green-100 dark:bg-green-600/20 text-green-900 dark:text-green-100`
+  - Ensures contrast in both light and dark modes
   - File: `src/app/room/[roomId]/page.tsx`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
-- [ ] Audit DestructButton in light mode
-  - Red states visibility
-  - Timer text contrast
+- [x] Audit DestructButton in light mode
+  - Fixed: Overlay uses `bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-400`
+  - Timer uses `text-red-600/amber-600 dark:text-red-400/amber-400`
   - File: `src/components/destruct-button.tsx`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
-- [ ] Audit modals in light mode
-  - Background overlay visibility
-  - Button contrast
+- [x] Audit modals in light mode
+  - Fixed: Buttons use `bg-green-100/red-100 dark:bg-green-600/20 dark:bg-red-600/20`
+  - Text uses `text-green-700/red-700 dark:text-green-400/red-400`
   - Files: `src/components/destruct-modal.tsx`, `src/components/expired-modal.tsx`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
 ### 2.4 Home Page Redesign
 

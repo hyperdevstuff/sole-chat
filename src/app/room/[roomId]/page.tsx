@@ -650,7 +650,7 @@ const Page = () => {
                   </span>
                   <div
                     className={`max-w-[85%] sm:max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
-                      ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                      ? "bg-green-100 dark:bg-green-600/20 text-green-900 dark:text-green-100 border border-green-200 dark:border-green-700/30"
                       : "bg-surface-elevated text-foreground border border-border/30"
                       }`}
                   >
