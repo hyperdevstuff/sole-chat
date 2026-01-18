@@ -17,10 +17,11 @@ import {
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Clipboard, ClipboardCheck, LogOut, SendIcon, Users, Plus, Check, Loader2 } from "lucide-react";
+import { Clipboard, ClipboardCheck, LogOut, SendIcon, Plus, Check, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RoomStatus } from "@/components/room-status";
 
 const MessageSkeleton = () => (
   <div className="w-full space-y-4 py-2">
@@ -556,19 +557,6 @@ const Page = () => {
             <span className="text-xs text-muted uppercase hidden sm:block">room id</span>
             <div className="flex items-center gap-2">
               <span className="font-bold text-green-500 truncate">{roomId}</span>
-              {status !== "connected" && (
-                <span
-                  className={`flex items-center gap-1.5 text-[10px] ${status === "error" ? "text-red-400" : "text-yellow-400"
-                    }`}
-                  title={status === "error" ? "Connection lost" : "Reconnecting..."}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${status === "error" ? "bg-red-400" : "bg-yellow-400 animate-pulse-subtle"
-                      }`}
-                  />
-                  <span className="hidden sm:inline">{status === "error" ? "Disconnected" : "Reconnecting"}</span>
-                </span>
-              )}
               <Button
                 variant="ghost"
                 onClick={copyLink}
@@ -582,11 +570,13 @@ const Page = () => {
                 )}
                 <span className="hidden sm:inline">{copied ? "COPIED" : "COPY"}</span>
               </Button>
-              <span className="flex items-center gap-1.5 text-xs text-muted">
-                <Users size={12} />
-                <span>{participantCount}/{roomInfo?.maxUsers ?? 10}</span>
-              </span>
             </div>
+            <RoomStatus
+              connectionStatus={status === "connected" ? "connected" : status === "error" ? "error" : "connecting"}
+              isE2EE={e2eeEnabled}
+              participantCount={participantCount}
+              maxParticipants={roomInfo?.maxUsers ?? 10}
+            />
           </div>
         </div>
 

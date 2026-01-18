@@ -109,13 +109,13 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 
 ### 2.2 Add Connection/Encryption Status to Header
 
-- [ ] Create `<RoomStatus>` component (file: `src/components/room-status.tsx`)
+- [x] Create `<RoomStatus>` component (file: `src/components/room-status.tsx`)
   - Connection state: green dot (connected), yellow pulse (reconnecting), red (error)
   - E2EE indicator: lock icon when encrypted, unlocked when not
   - User count: "2/10" badge
   - **MUST USE**: `frontend-ui-ux-engineer` agent
 
-- [ ] Integrate into room header
+- [x] Integrate into room header
   - Replace inline connection status with new component
   - File: `src/app/room/[roomId]/page.tsx`
 
