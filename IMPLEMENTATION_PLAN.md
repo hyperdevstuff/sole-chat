@@ -138,17 +138,20 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 
 ### 2.4 Home Page Redesign
 
-- [ ] Add room type selector
+- [x] Add room type selector
   - "Private Chat" (2 users, E2EE) vs "Group Room" (up to 10)
   - Visual differentiation (lock icon for private)
   - File: `src/app/page.tsx`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+  - Already implemented as part of 1.3 (E2EE multi-party handling)
 
-- [ ] Improve visual hierarchy
-  - Cleaner card layout
-  - Better spacing
-  - More intuitive flow
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+- [x] Improve visual hierarchy
+  - Industrial cryptographic terminal aesthetic
+  - User session header with identity display
+  - Corner accents for technical schematic look
+  - Better section separation (create vs join)
+  - Segmented duration control bar
+  - Improved typography with uppercase tracking
+  - File: `src/app/page.tsx`
 
 ---
 
