@@ -4,11 +4,11 @@ import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
 import { generateKeyPair, exportPublicKey, storePrivateKey } from "@/lib/crypto";
-import { ROOM_TYPE_CONFIG, type RoomType } from "@/lib/constants";
+import { ROOM_TYPE_CONFIG, ROOM_TTL_OPTIONS, ROOM_TTL_LABELS, type RoomType, type RoomTTLKey } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import "nanoid";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, Users } from "lucide-react";
+import { Loader2, Lock, Users, Clock } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ function App() {
   const { toast } = useToast();
   const [roomId, setRoomId] = useState("");
   const [roomType, setRoomType] = useState<RoomType>("private");
+  const [selectedTTL, setSelectedTTL] = useState<RoomTTLKey>("10m");
 
   const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
@@ -31,7 +32,11 @@ function App() {
         privateKey = keyPair.privateKey;
       }
       
-      const res = await api.rooms.create.post({ publicKey, type: roomType });
+      const res = await api.rooms.create.post({ 
+        publicKey, 
+        type: roomType,
+        ttl: ROOM_TTL_OPTIONS[selectedTTL]
+      });
       if (res.status === 200 && res.data?.roomId) {
         const newRoomId = res.data.roomId;
         
@@ -113,6 +118,31 @@ function App() {
                       <span className="text-xs text-muted text-center">
                         {config.description}
                       </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center text-muted">
+                <Clock size={14} className="mr-2" />
+                Duration
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(ROOM_TTL_OPTIONS) as RoomTTLKey[]).map((key) => {
+                  const isSelected = selectedTTL === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedTTL(key)}
+                      className={`flex items-center justify-center p-3 border transition-all text-sm font-bold ${
+                        isSelected
+                          ? "border-green-500 bg-green-500/10 text-green-500"
+                          : "border-border bg-surface-sunken hover:border-border-strong text-foreground"
+                      }`}
+                    >
+                      {ROOM_TTL_LABELS[key]}
                     </button>
                   );
                 })}

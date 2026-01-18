@@ -6,6 +6,7 @@ import {
   MAX_SESSION_AGE_SECONDS,
   LEAVE_GRACE_TTL_SECONDS,
   ROOM_TYPE_CONFIG,
+  VALID_TTL_VALUES,
   type RoomType,
 } from "@/lib/constants";
 import Elysia, { t } from "elysia";
@@ -26,24 +27,30 @@ export const rooms = new Elysia({ prefix: "/rooms" })
       const roomType: RoomType = body?.type ?? "private";
       const config = ROOM_TYPE_CONFIG[roomType];
       
+      const ttl = body?.ttl && VALID_TTL_VALUES.includes(body.ttl as 600 | 86400 | 604800)
+        ? body.ttl
+        : ROOM_TTL_SECONDS;
+      
       const roomData: Record<string, string | number | boolean> = {
         createdAt: Date.now(),
         type: roomType,
         maxUsers: config.maxUsers,
         e2ee: config.e2ee,
+        ttl,
       };
       if (body?.publicKey && roomType === "private") {
         roomData.creatorPublicKey = body.publicKey;
       }
       await redis.hset(`meta:${roomId}`, roomData);
-      await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
-      return { roomId, type: roomType, e2ee: config.e2ee };
+      await redis.expire(`meta:${roomId}`, ttl);
+      return { roomId, type: roomType, e2ee: config.e2ee, ttl };
     },
     {
       body: t.Optional(
         t.Object({
           publicKey: t.Optional(t.String()),
           type: t.Optional(t.Union([t.Literal("private"), t.Literal("group")])),
+          ttl: t.Optional(t.Number()),
         })
       ),
     }

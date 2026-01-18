@@ -46,14 +46,14 @@ input: '/?error=room-full'
   - UI: Room type selector on home page with Lock/Users icons
   - Files: `src/lib/constants.ts`, `src/app/api/rooms/index.ts`, `src/proxy.ts`, `src/hooks/use-e2ee.ts`, `src/app/page.tsx`, `src/app/room/[roomId]/page.tsx`, `src/lib/lua-scripts.ts`
 
-- [ ] Add participant count display in room header
-  - Show "2/10 users" or similar badge
+- [x] Add participant count display in room header
+  - Shows "X/Y" users badge with Users icon
+  - Real-time updates via chat.join/chat.leave events
   - File: `src/app/room/[roomId]/page.tsx`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
 ### 1.2 Room Creation with TTL Selection
 
-- [ ] Add TTL option constants (file: `src/lib/constants.ts`)
+- [x] Add TTL option constants (file: `src/lib/constants.ts`)
   ```typescript
   export const ROOM_TTL_OPTIONS = {
     '10m': 60 * 10,      // 600
@@ -62,36 +62,29 @@ input: '/?error=room-full'
   } as const;
   ```
 
-- [ ] Update API to accept TTL (file: `src/app/api/rooms/index.ts`)
-  - Add `ttl?: number` to POST body schema
-  - Validate TTL is one of allowed values (600, 86400, 604800)
-  - Use `ttl ?? ROOM_TTL_SECONDS` for Redis expiration
-  - Acceptance: API accepts and respects custom TTL
+- [x] Update API to accept TTL (file: `src/app/api/rooms/index.ts`)
+  - Added `ttl?: number` to POST body schema
+  - Validates TTL is one of allowed values (600, 86400, 604800)
+  - Uses `ttl ?? ROOM_TTL_SECONDS` for Redis expiration
 
-- [ ] Add duration selector to home page (file: `src/app/page.tsx`)
+- [x] Add duration selector to home page (file: `src/app/page.tsx`)
   - Segmented control: 10 min | 24 hours | 7 days
-  - Pass selected TTL to API
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+  - Passes selected TTL to API on room creation
 
 ### 1.3 Extend Room Button (Replace Toast Action)
 
-- [ ] Add "Extend" button to room header (file: `src/app/room/[roomId]/page.tsx`)
-  - Place next to countdown timer in DestructButton area
-  - Show "+10m" or clock icon
-  - Disable when max (7 days) reached
-  - Visual states: default, loading, success (brief checkmark), disabled
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+- [x] Add "Extend" button to room header (file: `src/app/room/[roomId]/page.tsx`)
+  - Placed next to countdown timer in DestructButton area
+  - Shows "+10m" with Plus icon
+  - Visual states: default, loading (spinner), success (checkmark), disabled
 
-- [ ] Track extension limit state
-  - Add `canExtend` state based on API `max_reached` response
-  - Show tooltip "Maximum 7 days reached" when disabled
-  - File: `src/app/room/[roomId]/page.tsx`
+- [x] Track extension limit state
+  - Added `canExtend` state based on API `max_reached` response
+  - Button disabled with visual feedback when maximum reached
 
-- [ ] Update warning toasts to remove action buttons
-  - Keep warning messages (60s, 10s warnings)
-  - Remove `action: { label: "Keep Alive", onClick: handleKeepAlive }`
-  - Toasts become pure notifications since button exists
-  - File: `src/app/room/[roomId]/page.tsx`
+- [x] Update warning toasts to remove action buttons
+  - Removed "Keep Alive" action from warning toasts
+  - Toasts are now pure notifications since button exists in header
 
 ---
 

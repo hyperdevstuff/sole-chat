@@ -6,6 +6,25 @@ export const ROOM_TTL_SECONDS = 60 * 10;
 /** Maximum session age in seconds (7 days) - prevents indefinite keep-alives */
 export const MAX_SESSION_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+/** Room TTL options for room creation */
+export const ROOM_TTL_OPTIONS = {
+  "10m": 60 * 10,       // 600 seconds
+  "24h": 60 * 60 * 24,  // 86400 seconds
+  "7d": 60 * 60 * 24 * 7, // 604800 seconds
+} as const;
+
+/** Valid TTL values for API validation */
+export const VALID_TTL_VALUES = [600, 86400, 604800] as const;
+
+/** TTL option labels for UI */
+export const ROOM_TTL_LABELS = {
+  "10m": "10 minutes",
+  "24h": "24 hours",
+  "7d": "7 days",
+} as const;
+
+export type RoomTTLKey = keyof typeof ROOM_TTL_OPTIONS;
+
 /** Grace period in seconds for leave/rejoin (30 seconds) */
 export const LEAVE_GRACE_TTL_SECONDS = 30;
 

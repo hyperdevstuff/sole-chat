@@ -17,7 +17,7 @@ import {
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Clipboard, ClipboardCheck, LogOut, SendIcon } from "lucide-react";
+import { Clipboard, ClipboardCheck, LogOut, SendIcon, Users, Plus, Check, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -83,6 +83,8 @@ const Page = () => {
   const [warned10, setWarned10] = useState(false);
   const [showDestructModal, setShowDestructModal] = useState(false);
   const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [canExtend, setCanExtend] = useState(true);
+  const [extendSuccess, setExtendSuccess] = useState(false);
   const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
@@ -94,11 +96,28 @@ const Page = () => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+  const [participantCount, setParticipantCount] = useState<number>(1);
 
   const { status: e2eeStatus, isEnabled: e2eeEnabled, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
     roomId,
     username,
   });
+
+  const { data: roomInfo } = useQuery({
+    queryKey: ["room-info", roomId],
+    queryFn: async () => {
+      const res = await api.rooms({ roomId }).info.get();
+      if (res.error) throw res.error;
+      return res.data as { type: string; maxUsers: number; e2ee: boolean; connectedCount: number };
+    },
+    staleTime: 30000, // 30 seconds
+  });
+
+  useEffect(() => {
+    if (roomInfo?.connectedCount !== undefined) {
+      setParticipantCount(roomInfo.connectedCount);
+    }
+  }, [roomInfo?.connectedCount]);
 
   // Fetch initial message history
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
@@ -146,7 +165,11 @@ const Page = () => {
         setTimeRemaining(data.ttl);
         setWarned60(false);
         setWarned10(false);
-        toast({ message: data.message, type: "success" });
+        setExtendSuccess(true);
+        setTimeout(() => setExtendSuccess(false), 1500);
+      } else if (data.error === "max_reached") {
+        setCanExtend(false);
+        toast({ message: data.message, type: "warning" });
       } else {
         toast({ message: data.message, type: "error" });
       }
@@ -199,7 +222,6 @@ const Page = () => {
         message: "Room expires in 1 minute",
         duration: 30000,
         type: "warning",
-        action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
     }
     if (timeRemaining <= WARNING_THRESHOLD_10S && !warned10) {
@@ -208,10 +230,9 @@ const Page = () => {
         message: "Room expires in 10 seconds!",
         duration: 15000,
         type: "error",
-        action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
     }
-  }, [timeRemaining, warned60, warned10, toast, handleKeepAlive]);
+  }, [timeRemaining, warned60, warned10, toast]);
 
   // Merge history with realtime messages (deduplicated by id)
   const messages = [...historyMessages, ...realtimeMessages].filter(
@@ -251,6 +272,7 @@ const Page = () => {
       } else if (payload.event === "chat.join") {
         const joinData = payload.data as { username: string; timestamp: number };
         if (joinData.username !== username) {
+          setParticipantCount((prev) => prev + 1);
           setSystemMessages((prev) => {
             // Dedupe: don't add "X joined" if already present for this username
             const alreadyJoined = prev.some((msg) => msg.text === `${joinData.username} joined`);
@@ -264,6 +286,7 @@ const Page = () => {
       } else if (payload.event === "chat.leave") {
         const leaveData = payload.data as { username: string; timestamp: number };
         if (leaveData.username !== username) {
+          setParticipantCount((prev) => Math.max(1, prev - 1));
           setSystemMessages((prev) => [
             ...prev,
             { id: `leave-${leaveData.timestamp}`, text: `${leaveData.username} left`, timestamp: leaveData.timestamp },
@@ -561,11 +584,38 @@ const Page = () => {
                 )}
                 <span className="hidden sm:inline">{copied ? "COPIED" : "COPY"}</span>
               </Button>
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                <Users size={12} />
+                <span>{participantCount}/{roomInfo?.maxUsers ?? 10}</span>
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+        <div className="flex items-center justify-center gap-2 shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+          <Button
+            variant="ghost"
+            onClick={handleKeepAlive}
+            disabled={!canExtend || keepAliveInProgressRef.current}
+            title={canExtend ? "Extend room by 10 minutes" : "Maximum 7 days reached"}
+            aria-label={canExtend ? "Extend room duration" : "Cannot extend - maximum duration reached"}
+            className={`flex items-center gap-1 text-xs px-2 py-1.5 h-auto rounded border transition-all ${
+              !canExtend 
+                ? "opacity-50 cursor-not-allowed border-border text-muted"
+                : extendSuccess
+                  ? "border-green-500 text-green-500 bg-green-500/10"
+                  : "border-border hover:border-green-500 text-muted hover:text-green-500"
+            }`}
+          >
+            {keepAliveInProgressRef.current ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : extendSuccess ? (
+              <Check size={12} />
+            ) : (
+              <Plus size={12} />
+            )}
+            <span className="hidden sm:inline">+10m</span>
+          </Button>
           <DestructButton
             timeRemaining={timeRemaining}
             onDestroy={handleDestroy}
