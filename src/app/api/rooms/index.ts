@@ -7,12 +7,18 @@ import {
   LEAVE_GRACE_TTL_SECONDS,
 } from "@/lib/constants";
 import Elysia, { t } from "elysia";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
+
+// 6-character alphanumeric ID (62^6 = 56.8 billion combinations)
+const generateRoomId = customAlphabet(
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+  6
+);
 import { authMiddleware } from "../[[...slugs]]/auth";
 
 export const rooms = new Elysia({ prefix: "/rooms" })
   .post("/create", async () => {
-    const roomId = nanoid();
+    const roomId = generateRoomId();
     await redis.hset(`meta:${roomId}`, {
       createdAt: Date.now(),
     });

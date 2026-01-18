@@ -1,116 +1,117 @@
 # Implementation Plan
 
-**Updated:** 2026-01-17 (Building Mode)
+**Updated:** 2026-01-18 (Ship-Readiness Audit)
 **Branch:** dev
-**Last Commit:** aca2235 feat: add smart scroll with unread message indicator
+**Last Commit:** 50089fa feat: add Button and Input shared UI components
 
 ---
 
-## Priority 1: Complete Theming (Use frontend-ui-ux-engineer)
+## Priority 0: SHIP BLOCKERS (Must Fix Before Launch)
 
-### Room Page Theme Migration
+### BLOCKER: Room ID Too Long
 
-- [x] Update room page colors (file: `src/app/room/[roomId]/page.tsx`) - ALREADY DONE
+Current implementation uses `nanoid()` which generates 21-character URL-safe IDs. Requirement is **6 alphanumeric characters** for easy copying/sharing.
+
+- [x] Change room ID to 6 alphanumeric characters (file: `src/app/api/rooms/index.ts`)
+  - Used `customAlphabet` from nanoid with alphanumeric charset, 6 chars
+  - Acceptance: Room URLs like `/room/Abc123` instead of `/room/V1StGXR8_Z5jdHi6B-myT`
+
+### BLOCKER: No End-to-End Encryption (E2EE)
+
+The app has **zero encryption**. Messages are stored as plaintext in Redis and transmitted in cleartext via Upstash Realtime.
+
+- [ ] Implement client-side E2EE for messages
+  - Generate keypair on room creation (Web Crypto API or tweetnacl)
+  - Key exchange mechanism when second user joins
+  - Encrypt messages before sending, decrypt on receive
+  - Store only ciphertext in Redis
+  - File changes: `src/app/room/[roomId]/page.tsx`, `src/lib/crypto.ts` (new)
+  - Acceptance: Messages unreadable in Redis, only participants can decrypt
+  - **Estimated effort**: 1-2 days (significant feature)
+
+- [ ] Add E2EE tests
+  - Unit tests for encrypt/decrypt functions
+  - E2E test verifying Redis contains only ciphertext
+  - File: `tests/e2ee.spec.ts`, `src/lib/__tests__/crypto.test.ts`
+  - Acceptance: Crypto operations verified, plaintext never stored
+
+---
+
+## Priority 1: Complete Home Page Theme Migration (Use frontend-ui-ux-engineer)
+
+### VERIFIED GAP: Home Page Uses Hardcoded Colors
+
+The home page (`src/app/page.tsx`) still uses `neutral-*` classes that will break in light mode.
+
+- [ ] Migrate page.tsx to theme tokens (file: `src/app/page.tsx`)
+  - Line 64: `text-neutral-500` → `text-muted`
+  - Line 68: `border-neutral-800 bg-neutral-900/50` → `border-border bg-surface/50`
+  - Line 75: `bg-neutral-950 border-neutral-800 text-neutral-400` → `bg-surface-sunken border-border text-muted`
+  - Line 84: `bg-neutral-100 text-black` → needs proper theme-aware button styling
+  - Acceptance: Home page readable in both light and dark themes
+  - **MUST USE**: frontend-ui-ux-engineer agent
+
+### VERIFIED GAP: Theme Toggle Uses Hardcoded Colors
+
+- [ ] Migrate theme-toggle.tsx to theme tokens (file: `src/components/theme-toggle.tsx`)
+  - Line 16: `bg-neutral-800` skeleton → `bg-surface-elevated`
+  - Line 25: `bg-neutral-100 dark:bg-neutral-800` → `bg-surface-elevated border-border`
+  - Acceptance: Toggle visible and consistent in both themes
+  - **MUST USE**: frontend-ui-ux-engineer agent
+
+### VERIFIED: Room Page Theme - COMPLETE
+
+- [x] Room page colors migrated (commit: prior work)
   - Uses `bg-surface/30` for header/footer
   - Uses `bg-surface-elevated` for received messages
   - Uses `border-border` throughout
-  - Uses `text-muted` / `text-foreground` appropriately
-  - Uses `bg-surface-sunken` for input
-  - Skeleton loader uses theme tokens
-  - Acceptance: Chat readable in both light and dark themes ✓
-
-### Component Theme Migration
-
-- [x] Update destruct-button.tsx (commit: 7154c01)
-  - Replace `bg-neutral-800` with `bg-surface-elevated`
-  - Replace `text-neutral-300` with `text-foreground`
-  - Keep `bg-red-900` for destruction overlay (semantic color)
-  - Acceptance: Button visible in both themes
-
-- [x] Update destruct-modal.tsx (commit: 7154c01)
-  - Replace `bg-neutral-900` with `bg-surface-elevated`
-  - Replace `border-neutral-800` with `border-border`
-  - Replace `text-neutral-400` with `text-muted`
-  - Keep `bg-black/80` for overlay (intentional dimming)
-  - Acceptance: Modal readable in both themes
-
-- [x] Update expired-modal.tsx (commit: 7154c01)
-  - Same pattern as destruct-modal
-  - Acceptance: Modal readable in both themes
-
-- [x] Update toast.tsx (commit: 7154c01)
-  - Replace `text-neutral-200/400` with `text-foreground/muted`
-  - Replace `bg-neutral-800` action button with `bg-surface-elevated`
-  - Keep semantic status colors (red/emerald/blue/amber)
-  - Acceptance: Toast visible in both themes
+  - NOTE: Green message bubbles (line 574) are intentional accent colors
 
 ---
 
-## Priority 2: Scroll Behavior UX
+## Priority 2: Adopt Shared UI Components (Optional Refactor)
 
-### Scroll Position Preservation
+### Context: Components Exist But Are Unused
 
-- [x] Add scroll position tracking (commit: aca2235)
-  - Added `messagesContainerRef` to scrollable message div
-  - Added `isAtBottom` state with 50px threshold detection
-  - Added `onScroll` handler to update `isAtBottom`
-  - Acceptance: State correctly reflects user scroll position
+Button and Input components were created (commit: 50089fa) but are not imported anywhere yet.
 
-- [x] Implement conditional auto-scroll (commit: aca2235)
-  - Only scrolls to bottom if `isAtBottom === true`
-  - Increments unread counter for messages from other users when not at bottom
-  - Acceptance: User scroll position preserved when reading history
+- [ ] Migrate home page to use shared components
+  - Replace 2 inline buttons with `<Button>` variants
+  - Replace 1 inline input with `<Input>`
+  - File: `src/app/page.tsx`
+  - **MUST USE**: frontend-ui-ux-engineer agent
 
-### New Messages Indicator
+- [ ] Migrate room page to use shared components
+  - Replace 4 inline buttons (send, exit, settings, new messages badge)
+  - Replace 1 inline input (message input)
+  - File: `src/app/room/[roomId]/page.tsx`
+  - **MUST USE**: frontend-ui-ux-engineer agent
 
-- [x] Add unread message counter (commit: aca2235)
-  - Added `unreadCount` state
-  - Increments when message arrives AND `!isAtBottom` AND not from current user
-  - Resets to 0 when user scrolls to bottom
-  - Acceptance: Counter accurately tracks unread messages
+- [ ] Migrate modals to use Button component
+  - expired-modal.tsx: 2 buttons
+  - destruct-modal.tsx: 3 buttons (use `danger` variant for destructive actions)
+  - **MUST USE**: frontend-ui-ux-engineer agent
 
-- [x] Add floating "New Messages" badge (commit: aca2235)
-  - Shows when `unreadCount > 0 && !isAtBottom`
-  - Displays count (e.g., "3 new messages")
-  - Click scrolls to bottom and resets counter
-  - Uses green accent styling with shadow
-  - Acceptance: Badge visible, clickable, disappears on scroll
+- [ ] Migrate other components
+  - theme-toggle.tsx: 1 button (likely `ghost` variant)
+  - toast.tsx: 2 buttons
+  - destruct-button.tsx: 1 button
+  - **MUST USE**: frontend-ui-ux-engineer agent
 
----
-
-## Priority 3: Code Quality & DX
-
-### Reusable UI Components
-
-- [ ] Create Button component (file: `src/components/ui/button.tsx`)
-  - Variants: primary, secondary, danger, ghost
-  - Sizes: sm, md, lg
-  - Theme-aware using CSS variables
-  - Acceptance: Reduces duplication in page.tsx and room page
-
-- [ ] Create Input component (file: `src/components/ui/input.tsx`)
-  - Consistent focus/disabled states
-  - Theme-aware styling
-  - Acceptance: Consistent input styling across app
-
-- [ ] Refactor existing buttons to use Button component
-  - Home page create/join buttons
-  - Room page send button, exit button
-  - Modal action buttons
-  - Acceptance: No inline button styling in page files
-
-### Uncommitted Work
-
-- [ ] Review and commit current changes
-  - `src/app/room/[roomId]/page.tsx` - Mobile header improvements
-  - `src/app/api/[[...slugs]]/route.ts` - API query param fixes
-  - Acceptance: Clean git state with descriptive commit
+**Summary**: 15 buttons + 2 inputs across 7 files can be migrated incrementally.
 
 ---
 
-## Priority 4: Testing & Verification
+## Priority 3: Visual Testing & Verification
 
-### Visual Testing
+### Theme Testing
+
+- [ ] Test theme switching end-to-end
+  - Verify all components respond to theme change
+  - Verify persistence across page refresh
+  - Verify system preference detection
+  - Use Playwriter MCP for automation
+  - Acceptance: Seamless light/dark switching
 
 - [ ] Test on mobile viewports
   - iPhone SE (375px) - smallest common
@@ -118,68 +119,84 @@
   - Pixel 7 (412px) - Android reference
   - Acceptance: No layout issues on any device
 
-- [ ] Test theme switching
-  - Verify all components respond to theme change
-  - Verify persistence across page refresh
-  - Verify system preference detection
-  - Acceptance: Seamless light/dark switching
+### E2E Test Expansion
 
-### E2E Test Coverage
-
-- [ ] Add theme toggle E2E test
+- [ ] Add theme toggle E2E test (file: `tests/theme-toggle.spec.ts`)
   - Toggle theme, verify localStorage update
   - Refresh page, verify theme persists
+  - Verify correct class on `<html>` element
   - Acceptance: Theme persistence works reliably
 
 ---
 
-## Previously Completed
+## Priority 4: Test Coverage Gaps (Future Work)
 
-### Mobile Responsiveness (All Complete)
-- [x] Fix cramped header on mobile (commit: 0778cc3)
-- [x] Reduce DestructButton width on mobile
-- [x] Improve input bar for mobile (safe area, touch targets)
-- [x] Improve message bubble width on mobile
-- [x] Fix toast overflow on narrow screens
-- [x] Add safe area support for iOS
+### VERIFIED GAPS from Explore Agent:
 
-### Theme Infrastructure (All Complete)
-- [x] Create theme utilities (src/lib/theme.ts)
-- [x] Create theme hook (src/hooks/use-theme.ts)
-- [x] Create theme toggle component
-- [x] Add flash prevention inline script
-- [x] Expand CSS variables in globals.css
-- [x] Update home page for theming (commit: fda3f64)
-- [x] Fix hydration mismatch in ThemeToggle (commit: 1b4a702)
+- [ ] Component unit tests
+  - No tests for individual React components
+  - Consider Vitest or Bun Test for src/components/
+  
+- [ ] API boundary tests
+  - No direct testing of Elysia endpoints without UI
+  - Could use Eden treaty client in test environment
 
-### Critical Bugs (All Fixed)
-- [x] Fix cookie set before Lua script confirms join
-- [x] Fix DELETE route cleaning wrong key
-- [x] Remove auth token from stored messages
-- [x] Clean up typingTimeoutRef on unmount
+- [ ] TTL validation tests
+  - No tests verify rooms expire after 10 minutes
+  - Would require time mocking
 
-### Error Handling (All Fixed)
-- [x] Add proper error handling for realtime emit
-- [x] Handle Upstash Realtime disconnections with auto-reconnect
+- [ ] Accessibility (a11y) tests
+  - No automated axe-core checks
+  - Could integrate with Playwright
 
-### UI/UX (All Fixed)
-- [x] Add aria-labels to all buttons
-- [x] Add focus trap to modals
-- [x] Fix viewport height on mobile (svh units)
-- [x] Add skeleton loader for message history
-- [x] Improve typing indicator animation
+- [ ] Realtime reconnection tests
+  - No tests for connection drop/recovery scenarios
 
-### Testing (All Fixed)
-- [x] Initialize Playwright for E2E tests
-- [x] Test room creation, 2-user limit, message delivery, room destruction
-- [x] Test Lua scripts in isolation (9 unit tests)
+---
 
-### Code Quality (All Fixed)
-- [x] Remove console.log from proxy.ts
-- [x] Remove commented code
-- [x] Extract hardcoded constants to src/lib/constants.ts
-- [x] Review silent catch blocks
-- [x] Fix createdAt type inconsistency
+## Completed (Verified)
+
+### Scroll Behavior UX - FULLY VERIFIED
+- [x] Scroll position tracking with `messagesContainerRef`, `isAtBottom` state (commit: aca2235)
+- [x] Conditional auto-scroll only when at bottom
+- [x] Unread message counter increments correctly
+- [x] Floating "New Messages" badge with click-to-scroll
+- [x] All logic verified by explore agent
+
+### Component Theme Migration - VERIFIED COMPLETE
+- [x] button.tsx uses `bg-surface-elevated`, `border-border` (commit: 50089fa)
+- [x] input.tsx uses `bg-surface-sunken`, `border-border` (commit: 50089fa)
+- [x] destruct-modal.tsx migrated (commit: 7154c01)
+- [x] expired-modal.tsx migrated (commit: 7154c01)
+- [x] toast.tsx migrated (commit: 7154c01)
+- [x] destruct-button.tsx migrated (commit: 7154c01)
+
+### Theme Infrastructure - VERIFIED COMPLETE
+- [x] Theme utilities (src/lib/theme.ts)
+- [x] Theme hook (src/hooks/use-theme.ts)
+- [x] Theme toggle component
+- [x] Flash prevention inline script
+- [x] CSS variables in globals.css
+- [x] Hydration mismatch fix (commit: 1b4a702)
+
+### Mobile Responsiveness - VERIFIED COMPLETE
+- [x] Header improvements (commit: 0778cc3)
+- [x] Safe area support
+- [x] Touch targets
+- [x] Toast overflow fixes
+
+### E2E Test Coverage - VERIFIED COMPLETE
+- [x] room-creation.spec.ts
+- [x] user-limit.spec.ts
+- [x] message-delivery.spec.ts
+- [x] room-destruction.spec.ts
+- [x] Lua script unit tests (9 tests)
+
+### Code Quality - VERIFIED COMPLETE
+- [x] Constants extracted to src/lib/constants.ts
+- [x] Silent catch blocks audited
+- [x] Debug logs removed
+- [x] Type inconsistencies fixed
 
 ---
 
@@ -207,14 +224,6 @@ _None currently_
 - 30s grace period for leave/rejoin (balance UX and slot availability)
 - Class-based theming via `.dark` on `<html>` element
 
-### Redis Key Schema
-```
-connected:{roomId}  - SET of auth tokens (max 2)
-leaving:{roomId}    - SET of tokens in grace period
-meta:{roomId}       - HASH with creator info
-messages:{roomId}   - LIST of messages
-```
-
 ### CSS Variable Mapping
 | Variable | Light | Dark | Usage |
 |----------|-------|------|-------|
@@ -240,6 +249,17 @@ messages:{roomId}   - LIST of messages
 | E2E flows | High | 4 test files |
 | API integration | None | No dedicated tests |
 | React hooks | None | No unit tests |
+
+### Verified Migration Status (via Explore Agents)
+| File | Status | Notes |
+|------|--------|-------|
+| page.tsx | **NEEDS MIGRATION** | 4 locations with neutral-* |
+| theme-toggle.tsx | **NEEDS MIGRATION** | 2 locations with neutral-* |
+| room/[roomId]/page.tsx | COMPLETE | Green bubbles are intentional |
+| button.tsx | COMPLETE | Uses theme tokens |
+| input.tsx | COMPLETE | Uses theme tokens |
+| modals | COMPLETE | All migrated |
+| toast.tsx | COMPLETE | Uses theme tokens |
 
 ### Risks
 - No heartbeat = can't detect zombie connections
