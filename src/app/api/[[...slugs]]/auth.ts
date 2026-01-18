@@ -16,8 +16,10 @@ export const authMiddleware = new Elysia({ name: "auth" })
       return { error: "Unauthorized" };
     }
   })
-  .derive({ as: "scoped" }, async ({ query, cookie }) => {
-    const roomId = query.roomId;
+  .derive({ as: "scoped" }, async ({ params, request, cookie }) => {
+    const url = new URL(request.url);
+    const queryRoomId = url.searchParams.get("roomId");
+    const roomId = (params as { roomId?: string }).roomId ?? queryRoomId;
     const token = cookie["x-auth-token"].value as string | undefined;
     if (!roomId || !token) {
       throw new AuthError("Missing RoomId or Auth Token");

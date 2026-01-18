@@ -156,7 +156,7 @@ const Page = () => {
 
   const { mutate: keepAlive } = useMutation({
     mutationFn: async () => {
-      const res = await api.rooms({ roomId }).patch({ query: { roomId } });
+      const res = await api.rooms({ roomId }).patch();
       if (res.error) throw res.error;
       return res.data as { success: boolean; ttl: number; message: string; error?: string };
     },
@@ -459,7 +459,7 @@ const Page = () => {
 
   const { mutate: destroyRoom } = useMutation({
     mutationFn: async () => {
-      await api.rooms({ roomId }).delete({ query: { roomId } });
+      await api.rooms({ roomId }).delete();
     },
     onSuccess: () => {
       router.push("/");
@@ -518,7 +518,7 @@ const Page = () => {
 
   const handleExit = useCallback(async () => {
     if (!username) return;
-    await api.rooms({ roomId }).leave.post({ username }, { query: { roomId } });
+    await api.rooms({ roomId }).leave.post({ username });
     router.push("/");
   }, [roomId, username, router]);
 
