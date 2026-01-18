@@ -125,11 +125,11 @@ The home page (`src/app/page.tsx`) still uses `neutral-*` classes that will brea
 
 Button and Input components were created (commit: 50089fa) but are not imported anywhere yet.
 
-- [ ] Migrate home page to use shared components
-  - Replace 2 inline buttons with `<Button>` variants
-  - Replace 1 inline input with `<Input>`
+- [x] Migrate home page to use shared components
+  - Replaced 2 inline buttons with `<Button>` variants (primary + ghost)
+  - Replaced 1 inline input with `<Input>`
   - File: `src/app/page.tsx`
-  - **MUST USE**: frontend-ui-ux-engineer agent
+  - Used className overrides for exact visual match (rounded-none, h-auto)
 
 - [ ] Migrate room page to use shared components
   - Replace 4 inline buttons (send, exit, settings, new messages badge)
