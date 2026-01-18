@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 
 export type ToastType = "error" | "success" | "info" | "warning";
@@ -50,10 +50,10 @@ export function Toast({
   const [isExiting, setIsExiting] = useState(false);
   const [progress, setProgress] = useState(100);
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => onDismiss(id), 300);
-  };
+  }, [onDismiss, id]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -82,7 +82,7 @@ export function Toast({
     const animationFrame = requestAnimationFrame(updateProgress);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [duration, isExiting]);
+  }, [duration, isExiting, handleDismiss]);
 
   return (
     <div

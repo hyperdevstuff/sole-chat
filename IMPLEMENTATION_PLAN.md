@@ -1,8 +1,8 @@
 # Implementation Plan
 
-**Updated:** 2026-01-18 (Ship-Readiness Audit)
+**Updated:** 2026-01-18 (Ship-Readiness Audit v2)
 **Branch:** dev
-**Last Commit:** 50089fa feat: add Button and Input shared UI components
+**Last Commit:** 2326def refactor: migrate room page to shared Button and Input components
 
 ---
 
@@ -30,6 +30,74 @@ The app now has full E2EE. Messages are encrypted client-side before sending to 
 - [x] Add E2EE tests
   - 10 unit tests for crypto functions (key gen, export/import, derive, encrypt/decrypt)
   - File: `src/lib/__tests__/crypto.test.ts`
+
+
+---
+
+## Priority 0.1: CRITICAL BUG FIXES (Completed 2026-01-18)
+
+### BUG: ThemeToggle Hydration Mismatch - FIXED
+
+- [x] Fix hydration mismatch in use-theme.ts (file: `src/hooks/use-theme.ts`)
+  - Changed: `typeof window !== "undefined"` → `useState` + `useEffect` pattern
+  - Root cause: Server/client evaluated `typeof window` differently
+  - Fix: Use React state that updates after mount
+
+### BUG: Duplicate Toasts on Room Creation - FIXED
+
+- [x] Remove redundant "Connected to chat" toast (file: `src/app/room/[roomId]/page.tsx`)
+  - Added `hasConnectedBefore` ref to track actual reconnection vs initial connection
+  - "Reconnected to chat" toast only shows on actual reconnection (status connecting→connected AFTER first connection)
+  - Result: No duplicate toast when creating/joining room
+
+### BUG: Keep Alive Toast Duration Too Short - FIXED
+
+- [x] Increase warning toast durations (file: `src/app/room/[roomId]/page.tsx`)
+  - 60-second warning: Added `duration: 30000` (30 seconds)
+  - 10-second warning: Added `duration: 15000` (15 seconds)
+  - Result: Users have adequate time to click "Keep Alive"
+
+---
+
+## Priority 0.2: SHIP BLOCKERS (Lint & Polish) - COMPLETE
+
+**Identified:** 2026-01-18 Ship-Readiness Audit
+**Completed:** 2026-01-18
+
+### BLOCKER: ESLint Errors (2) - FIXED
+
+- [x] Fix empty interface in input.tsx (file: `src/components/ui/input.tsx`)
+  - Changed `interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}` to `type InputProps = React.InputHTMLAttributes<HTMLInputElement>;`
+  - Acceptance: `bun run lint` passes
+
+- [x] Fix setState in useEffect (file: `src/hooks/use-theme.ts`)
+  - Changed to use `useSyncExternalStore` pattern to avoid React Compiler lint error
+  - Acceptance: `bun run lint` passes
+
+### BLOCKER: ESLint Warnings (5) - FIXED
+
+- [x] Remove unused import RealtimeEvents (file: `src/app/room/[roomId]/page.tsx:18`)
+- [x] Remove unused import useRef from toast.tsx, replaced with useCallback
+- [x] Remove unused param onKeyExchange (file: `src/hooks/use-e2ee.ts`)
+- [x] Remove unused var err (file: `src/hooks/use-e2ee.ts`)
+- [x] Fix missing dependency handleDismiss (file: `src/components/toast.tsx`)
+  - Wrapped handleDismiss in useCallback and added to dependency array
+
+### BLOCKER: Typo in Home Page - FIXED
+
+- [x] Fix typo "ablities" → "abilities" (file: `src/app/page.tsx:71`)
+
+### REQUIRED: Missing .env.example - DONE
+
+- [x] Create `.env.example` file with required environment variables
+
+### REQUIRED: Update README - DONE
+
+- [x] Replace boilerplate README with project documentation
+  - Describes what the project does
+  - Lists required environment variables
+  - Explains how E2EE works
+  - Provides deployment instructions
 
 ---
 

@@ -15,7 +15,7 @@ import {
   WARNING_THRESHOLD_10S,
 } from "@/lib/constants";
 import { useRealtime } from "@/lib/realtime-client";
-import type { Message, RealtimeEvents } from "@/lib/realtime";
+import type { Message } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Clipboard, ClipboardCheck, LogOut, SendIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -86,6 +86,7 @@ const Page = () => {
   const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
+  const hasConnectedBefore = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -196,6 +197,7 @@ const Page = () => {
       setWarned60(true);
       toast({
         message: "Room expires in 1 minute",
+        duration: 30000,
         type: "warning",
         action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
@@ -204,6 +206,7 @@ const Page = () => {
       setWarned10(true);
       toast({
         message: "Room expires in 10 seconds!",
+        duration: 15000,
         type: "error",
         action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
@@ -283,7 +286,7 @@ const Page = () => {
     if (prev === null) return;
 
     if (prev === "connecting" && status === "connected") {
-      if (hasEmittedJoin.current) {
+      if (hasConnectedBefore.current) {
         toast({ message: "Reconnected to chat.", type: "success" });
         if (username) {
           fetch("/api/realtime", {
@@ -298,9 +301,8 @@ const Page = () => {
             console.warn("Failed to re-emit join on reconnection:", err);
           });
         }
-      } else {
-        toast({ message: "Connected to chat.", type: "success" });
       }
+      hasConnectedBefore.current = true;
     } else if (prev === "connected" && status === "connecting") {
       toast({ message: "Connection lost. Reconnecting...", type: "warning" });
     } else if (status === "error") {

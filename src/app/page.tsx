@@ -68,7 +68,7 @@ function App() {
             private_chat
           </h1>
           <p className="text-muted text-sm">
-            E2E chat with self-destructing ablities.
+            E2E chat with self-destructing abilities.
           </p>
         </div>
         <div className="border border-border bg-surface/50 p-6 backdrop-blur-md">

@@ -17,10 +17,9 @@ type E2EEStatus = "initializing" | "waiting" | "ready" | "error";
 interface UseE2EEOptions {
   roomId: string;
   username: string;
-  onKeyExchange?: (publicKey: string, username: string) => void;
 }
 
-export function useE2EE({ roomId, username, onKeyExchange }: UseE2EEOptions) {
+export function useE2EE({ roomId, username }: UseE2EEOptions) {
   const [status, setStatus] = useState<E2EEStatus>("initializing");
   const [error, setError] = useState<string | null>(null);
   const sharedKeyRef = useRef<CryptoKey | null>(null);
@@ -87,7 +86,7 @@ export function useE2EE({ roomId, username, onKeyExchange }: UseE2EEOptions) {
         const peerKey = await importPublicKey(peerPublicKey);
         sharedKeyRef.current = await deriveSharedKey(privateKeyRef.current, peerKey);
         setStatus("ready");
-      } catch (err) {
+      } catch {
         setStatus("error");
         setError("Key exchange failed");
       }

@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# sole-chat
 
-## Getting Started
+Anonymous ephemeral 2-person chat rooms with end-to-end encryption and self-destruction.
 
-First, run the development server:
+## Features
+
+- **Anonymous**: No registration required - get a random username
+- **Ephemeral**: Rooms auto-expire after 10 minutes of inactivity
+- **Private**: 2 users per room maximum
+- **Encrypted**: E2EE using ECDH P-256 key exchange and AES-GCM-256
+- **Self-destruct**: Either user can destroy the room instantly
+
+## How E2EE Works
+
+1. Room creator generates an ECDH P-256 keypair, stores private key locally
+2. Public key is stored on the server when room is created
+3. When another user joins, they generate their own keypair
+4. Joiner fetches creator's public key, derives shared secret via ECDH
+5. Joiner stores their public key on server for creator to fetch
+6. Both parties now have identical shared secrets for AES-GCM encryption
+7. All messages are encrypted client-side before transmission
+8. Server only sees ciphertext - cannot read message contents
+
+## Environment Variables
+
+Create a `.env.local` file with:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+UPSTASH_REDIS_REST_URL=your_upstash_redis_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token
+```
+
+Get these from [Upstash Console](https://console.upstash.com/).
+
+## Development
+
+```bash
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 16 (App Router)
+- **Runtime**: React 19 with React Compiler
+- **API**: Elysia (via catch-all route)
+- **Realtime**: Upstash Realtime (managed WebSocket)
+- **Database**: Upstash Redis
+- **Styling**: TailwindCSS v4
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Deploy to Vercel:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Connect your repository to Vercel
+2. Add environment variables in Vercel dashboard
+3. Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app will automatically build and deploy with zero configuration.
