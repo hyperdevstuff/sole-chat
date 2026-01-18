@@ -1,16 +1,25 @@
 import Elysia, { t } from "elysia";
-import { authMiddleware } from "../[[...slugs]]/auth";
 import { redis } from "@/lib/redis";
 import { Message, realtime } from "@/lib/realtime";
 import { nanoid } from "nanoid";
 
+async function validateAuth(roomId: string, token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  return (await redis.sismember(`connected:${roomId}`, token)) === 1;
+}
+
 export const messages = new Elysia({ prefix: "/messages" })
-  .use(authMiddleware)
   .post(
     "/",
-    async ({ auth, body }) => {
+    async ({ body, query, cookie }) => {
       const { sender, text } = body;
-      const { roomId } = auth;
+      const { roomId } = query;
+      const token = cookie["x-auth-token"].value as string | undefined;
+      
+      if (!await validateAuth(roomId, token)) {
+        throw new Error("Unauthorized");
+      }
+      
       const roomExists = await redis.exists(`meta:${roomId}`);
       if (!roomExists) throw new Error("Room doesn't exist");
 
@@ -38,8 +47,14 @@ export const messages = new Elysia({ prefix: "/messages" })
   )
   .get(
     "/",
-    async ({ auth }) => {
-      const { roomId } = auth;
+    async ({ query, cookie }) => {
+      const { roomId } = query;
+      const token = cookie["x-auth-token"].value as string | undefined;
+      
+      if (!await validateAuth(roomId, token)) {
+        throw new Error("Unauthorized");
+      }
+      
       const [rawMessages, ttl] = await Promise.all([
         redis.lrange(`messages:${roomId}`, 0, -1),
         redis.ttl(`meta:${roomId}`),
