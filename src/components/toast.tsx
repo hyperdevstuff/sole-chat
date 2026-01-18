@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
 
 export type ToastType = "error" | "success" | "info" | "warning";
@@ -50,10 +50,10 @@ export function Toast({
   const [isExiting, setIsExiting] = useState(false);
   const [progress, setProgress] = useState(100);
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => onDismiss(id), 300);
-  };
+  }, [onDismiss, id]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -82,7 +82,7 @@ export function Toast({
     const animationFrame = requestAnimationFrame(updateProgress);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [duration, isExiting]);
+  }, [duration, isExiting, handleDismiss]);
 
   return (
     <div
@@ -100,10 +100,10 @@ export function Toast({
       <div className="shrink-0">{icons[type]}</div>
       
       <div className="flex-1 pt-0.5">
-        <p className="text-sm font-medium leading-none text-neutral-200">
+        <p className="text-sm font-medium leading-none text-foreground">
           {type.charAt(0).toUpperCase() + type.slice(1)}
         </p>
-        <p className="mt-1 text-sm text-neutral-400 leading-relaxed">
+        <p className="mt-1 text-sm text-muted leading-relaxed">
           {message}
         </p>
         {action && (
@@ -112,7 +112,7 @@ export function Toast({
               action.onClick();
               handleDismiss();
             }}
-            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-colors"
+            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-surface-elevated hover:bg-surface-elevated/80 text-foreground transition-colors"
           >
             {action.label}
           </button>
@@ -121,12 +121,12 @@ export function Toast({
 
       <button
         onClick={handleDismiss}
-        className="shrink-0 rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-neutral-800/50 focus:outline-none focus:ring-2 focus:ring-neutral-500 text-neutral-400"
+        className="shrink-0 rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-surface-elevated/50 focus:outline-none focus:ring-2 focus:ring-border text-muted"
       >
         <X className="w-4 h-4" />
       </button>
 
-      <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/20">
+      <div className="absolute bottom-0 left-0 h-0.5 w-full bg-surface-elevated/20">
         <div
           className={`h-full ${progressStyles[type]} transition-all duration-75 ease-linear`}
           style={{ width: `${progress}%` }}

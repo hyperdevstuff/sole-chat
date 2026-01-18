@@ -28,6 +28,10 @@ const schema = {
       username: z.string(),
       timestamp: z.number(),
     }),
+    keyExchange: z.object({
+      publicKey: z.string(),
+      username: z.string(),
+    }),
   },
 };
 

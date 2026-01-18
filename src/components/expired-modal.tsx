@@ -36,13 +36,13 @@ export function ExpiredModal({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        className="relative bg-neutral-900 border border-neutral-800 rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
+        className="relative bg-surface-elevated border border-border rounded-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-neutral-100 mb-2">
+        <h2 className="text-lg font-semibold text-foreground mb-2">
           Room Expired
         </h2>
-        <p className="text-sm text-neutral-400 mb-6">
+        <p className="text-sm text-muted mb-6">
           This room has expired. Export your chat or start fresh.
         </p>
 
@@ -57,7 +57,7 @@ export function ExpiredModal({
           <button
             onClick={onCreateNew}
             aria-label="Create a new chat room"
-            className="w-full py-2.5 px-4 bg-neutral-700/50 hover:bg-neutral-700 border border-neutral-600/40 text-neutral-300 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-foreground rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Create New Room
           </button>
