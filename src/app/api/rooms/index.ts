@@ -5,6 +5,9 @@ import {
   ROOM_TTL_SECONDS,
   MAX_SESSION_AGE_SECONDS,
   LEAVE_GRACE_TTL_SECONDS,
+  ROOM_TYPE_CONFIG,
+  VALID_TTL_VALUES,
+  type RoomType,
 } from "@/lib/constants";
 import Elysia, { t } from "elysia";
 import { customAlphabet } from "nanoid";
@@ -21,25 +24,66 @@ export const rooms = new Elysia({ prefix: "/rooms" })
     "/create",
     async ({ body }) => {
       const roomId = generateRoomId();
-      const roomData: Record<string, string | number> = {
+      const roomType: RoomType = body?.type ?? "private";
+      const config = ROOM_TYPE_CONFIG[roomType];
+      
+      const ttl = body?.ttl && VALID_TTL_VALUES.includes(body.ttl as 600 | 86400 | 604800)
+        ? body.ttl
+        : ROOM_TTL_SECONDS;
+      
+      const roomData: Record<string, string | number | boolean> = {
         createdAt: Date.now(),
+        type: roomType,
+        maxUsers: config.maxUsers,
+        e2ee: config.e2ee,
+        ttl,
       };
-      if (body?.publicKey) {
+      if (body?.publicKey && roomType === "private") {
         roomData.creatorPublicKey = body.publicKey;
       }
       await redis.hset(`meta:${roomId}`, roomData);
-      await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
-      return { roomId };
+      await redis.expire(`meta:${roomId}`, ttl);
+      return { roomId, type: roomType, e2ee: config.e2ee, ttl };
     },
     {
       body: t.Optional(
         t.Object({
           publicKey: t.Optional(t.String()),
+          type: t.Optional(t.Union([t.Literal("private"), t.Literal("group")])),
+          ttl: t.Optional(t.Number()),
         })
       ),
     }
   )
   .use(authMiddleware)
+  .get(
+    "/:roomId/info",
+    async ({ params, auth }) => {
+      const { roomId } = params;
+      if (auth.roomId !== roomId) throw new Error("Unauthorized");
+      const meta = await redis.hgetall<{ 
+        type?: string; 
+        maxUsers?: string; 
+        e2ee?: string;
+        createdAt?: string;
+      }>(
+        `meta:${roomId}`
+      );
+      if (!meta) throw new Error("Room not found");
+      const connectedCount = await redis.scard(`connected:${roomId}`);
+      return {
+        type: (meta.type ?? "private") as "private" | "group",
+        maxUsers: meta.maxUsers ? parseInt(meta.maxUsers, 10) : 2,
+        e2ee: meta.e2ee === "true" || meta.e2ee === "1" || meta.type === "private" || !meta.type,
+        connectedCount,
+      };
+    },
+    {
+      params: t.Object({
+        roomId: t.String(),
+      }),
+    }
+  )
   .get(
     "/:roomId/keys",
     async ({ params, auth }) => {

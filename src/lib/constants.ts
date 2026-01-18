@@ -6,6 +6,25 @@ export const ROOM_TTL_SECONDS = 60 * 10;
 /** Maximum session age in seconds (7 days) - prevents indefinite keep-alives */
 export const MAX_SESSION_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+/** Room TTL options for room creation */
+export const ROOM_TTL_OPTIONS = {
+  "10m": 60 * 10,       // 600 seconds
+  "24h": 60 * 60 * 24,  // 86400 seconds
+  "7d": 60 * 60 * 24 * 7, // 604800 seconds
+} as const;
+
+/** Valid TTL values for API validation */
+export const VALID_TTL_VALUES = [600, 86400, 604800] as const;
+
+/** TTL option labels for UI */
+export const ROOM_TTL_LABELS = {
+  "10m": "10 minutes",
+  "24h": "24 hours",
+  "7d": "7 days",
+} as const;
+
+export type RoomTTLKey = keyof typeof ROOM_TTL_OPTIONS;
+
 /** Grace period in seconds for leave/rejoin (30 seconds) */
 export const LEAVE_GRACE_TTL_SECONDS = 30;
 
@@ -31,4 +50,31 @@ export const WARNING_THRESHOLD_10S = 10;
 // Room Constraints
 
 /** Maximum number of users per room */
-export const MAX_USERS_PER_ROOM = 2;
+export const MAX_USERS_PER_ROOM = 10;
+
+/** Maximum users for private (E2EE) rooms */
+export const MAX_USERS_PRIVATE = 2;
+
+/** Maximum users for group rooms (no E2EE) */
+export const MAX_USERS_GROUP = 10;
+
+// Room Types
+
+/** Room type definitions */
+export type RoomType = "private" | "group";
+
+/** Room type configuration */
+export const ROOM_TYPE_CONFIG = {
+  private: {
+    maxUsers: 2,
+    e2ee: true,
+    label: "Private Chat",
+    description: "2 users, end-to-end encrypted",
+  },
+  group: {
+    maxUsers: 10,
+    e2ee: false,
+    label: "Group Room",
+    description: "Up to 10 users, no encryption",
+  },
+} as const;

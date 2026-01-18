@@ -53,14 +53,14 @@ export function DestructModal({
           <button
             onClick={onExportAndDestroy}
             aria-label="Export chat history and destroy room"
-            className="w-full py-2.5 px-4 bg-green-600/20 hover:bg-green-600/30 border border-green-600/40 text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 bg-green-100 dark:bg-green-600/20 hover:bg-green-200 dark:hover:bg-green-600/30 border border-green-200 dark:border-green-600/40 text-green-700 dark:text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Export & Destroy
           </button>
           <button
             onClick={onJustDestroy}
             aria-label="Destroy room without exporting"
-            className="w-full py-2.5 px-4 bg-red-600/20 hover:bg-red-600/30 border border-red-600/40 text-red-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 border border-red-200 dark:border-red-600/40 text-red-700 dark:text-red-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Just Destroy
           </button>

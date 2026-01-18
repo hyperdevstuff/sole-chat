@@ -17,10 +17,11 @@ import {
 import { useRealtime } from "@/lib/realtime-client";
 import type { Message } from "@/lib/realtime";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Clipboard, ClipboardCheck, LogOut, SendIcon } from "lucide-react";
+import { Clipboard, ClipboardCheck, LogOut, SendIcon, Plus, Check, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RoomStatus } from "@/components/room-status";
 
 const MessageSkeleton = () => (
   <div className="w-full space-y-4 py-2">
@@ -83,6 +84,8 @@ const Page = () => {
   const [warned10, setWarned10] = useState(false);
   const [showDestructModal, setShowDestructModal] = useState(false);
   const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [canExtend, setCanExtend] = useState(true);
+  const [extendSuccess, setExtendSuccess] = useState(false);
   const keepAliveInProgressRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasEmittedJoin = useRef(false);
@@ -94,11 +97,28 @@ const Page = () => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+  const [participantCount, setParticipantCount] = useState<number>(1);
 
-  const { status: e2eeStatus, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
+  const { status: e2eeStatus, isEnabled: e2eeEnabled, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
     roomId,
     username,
   });
+
+  const { data: roomInfo } = useQuery({
+    queryKey: ["room-info", roomId],
+    queryFn: async () => {
+      const res = await api.rooms({ roomId }).info.get();
+      if (res.error) throw res.error;
+      return res.data as { type: string; maxUsers: number; e2ee: boolean; connectedCount: number };
+    },
+    staleTime: 30000, // 30 seconds
+  });
+
+  useEffect(() => {
+    if (roomInfo?.connectedCount !== undefined) {
+      setParticipantCount(roomInfo.connectedCount);
+    }
+  }, [roomInfo?.connectedCount]);
 
   // Fetch initial message history
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
@@ -136,7 +156,7 @@ const Page = () => {
 
   const { mutate: keepAlive } = useMutation({
     mutationFn: async () => {
-      const res = await api.rooms({ roomId }).patch({ query: { roomId } });
+      const res = await api.rooms({ roomId }).patch();
       if (res.error) throw res.error;
       return res.data as { success: boolean; ttl: number; message: string; error?: string };
     },
@@ -146,7 +166,11 @@ const Page = () => {
         setTimeRemaining(data.ttl);
         setWarned60(false);
         setWarned10(false);
-        toast({ message: data.message, type: "success" });
+        setExtendSuccess(true);
+        setTimeout(() => setExtendSuccess(false), 1500);
+      } else if (data.error === "max_reached") {
+        setCanExtend(false);
+        toast({ message: data.message, type: "warning" });
       } else {
         toast({ message: data.message, type: "error" });
       }
@@ -199,7 +223,6 @@ const Page = () => {
         message: "Room expires in 1 minute",
         duration: 30000,
         type: "warning",
-        action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
     }
     if (timeRemaining <= WARNING_THRESHOLD_10S && !warned10) {
@@ -208,10 +231,9 @@ const Page = () => {
         message: "Room expires in 10 seconds!",
         duration: 15000,
         type: "error",
-        action: { label: "Keep Alive", onClick: handleKeepAlive },
       });
     }
-  }, [timeRemaining, warned60, warned10, toast, handleKeepAlive]);
+  }, [timeRemaining, warned60, warned10, toast]);
 
   // Merge history with realtime messages (deduplicated by id)
   const messages = [...historyMessages, ...realtimeMessages].filter(
@@ -227,7 +249,7 @@ const Page = () => {
       if (payload.event === "chat.message") {
         const newMessage = payload.data as Message;
         setRealtimeMessages((prev) => [...prev, newMessage]);
-        if (e2eeStatus === "ready") {
+        if (e2eeEnabled && e2eeStatus === "ready") {
           const decrypted = await decryptMessage(newMessage.text);
           setDecryptedMessages((prev) => ({ ...prev, [newMessage.id]: decrypted }));
         }
@@ -235,10 +257,10 @@ const Page = () => {
           setUnreadCount((prev) => prev + 1);
         }
       } else if (payload.event === "chat.keyExchange") {
+        if (!e2eeEnabled) return;
         const keyData = payload.data as { publicKey: string; username: string };
         if (keyData.username !== username) {
           handleKeyExchange(keyData.publicKey);
-          toast({ message: "Secure connection established.", type: "success" });
         }
       } else if (payload.event === "chat.destroy") {
         router.push("/");
@@ -250,6 +272,7 @@ const Page = () => {
       } else if (payload.event === "chat.join") {
         const joinData = payload.data as { username: string; timestamp: number };
         if (joinData.username !== username) {
+          setParticipantCount((prev) => prev + 1);
           setSystemMessages((prev) => {
             // Dedupe: don't add "X joined" if already present for this username
             const alreadyJoined = prev.some((msg) => msg.text === `${joinData.username} joined`);
@@ -263,6 +286,7 @@ const Page = () => {
       } else if (payload.event === "chat.leave") {
         const leaveData = payload.data as { username: string; timestamp: number };
         if (leaveData.username !== username) {
+          setParticipantCount((prev) => Math.max(1, prev - 1));
           setSystemMessages((prev) => [
             ...prev,
             { id: `leave-${leaveData.timestamp}`, text: `${leaveData.username} left`, timestamp: leaveData.timestamp },
@@ -270,7 +294,7 @@ const Page = () => {
         }
       }
     },
-    [router, username, isAtBottom, e2eeStatus, decryptMessage, handleKeyExchange, toast],
+    [router, username, isAtBottom, e2eeStatus, e2eeEnabled, decryptMessage, handleKeyExchange, toast],
   );
 
   const { status } = useRealtime({
@@ -287,7 +311,6 @@ const Page = () => {
 
     if (prev === "connecting" && status === "connected") {
       if (hasConnectedBefore.current) {
-        toast({ message: "Reconnected to chat.", type: "success" });
         if (username) {
           fetch("/api/realtime", {
             method: "POST",
@@ -322,7 +345,7 @@ const Page = () => {
   }, [messages, systemMessages, isAtBottom]);
 
   useEffect(() => {
-    if (e2eeStatus !== "ready" || messages.length === 0) return;
+    if (!e2eeEnabled || e2eeStatus !== "ready" || messages.length === 0) return;
     const decryptAll = async () => {
       const newDecrypted: Record<string, string> = {};
       for (const msg of messages) {
@@ -335,7 +358,7 @@ const Page = () => {
       }
     };
     decryptAll();
-  }, [e2eeStatus, messages, decryptMessage, decryptedMessages]);
+  }, [e2eeStatus, e2eeEnabled, messages, decryptMessage, decryptedMessages]);
 
   useEffect(() => {
     if (hasEmittedJoin.current || !username) return;
@@ -413,7 +436,7 @@ const Page = () => {
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
-      const encryptedText = e2eeStatus === "ready" ? await encryptMessage(text) : text;
+      const encryptedText = e2eeEnabled && e2eeStatus === "ready" ? await encryptMessage(text) : text;
       await api.messages.post(
         { sender: username, text: encryptedText },
         { query: { roomId } },
@@ -436,7 +459,7 @@ const Page = () => {
 
   const { mutate: destroyRoom } = useMutation({
     mutationFn: async () => {
-      await api.rooms({ roomId }).delete({ query: { roomId } });
+      await api.rooms({ roomId }).delete();
     },
     onSuccess: () => {
       router.push("/");
@@ -495,7 +518,7 @@ const Page = () => {
 
   const handleExit = useCallback(async () => {
     if (!username) return;
-    await api.rooms({ roomId }).leave.post({ username }, { query: { roomId } });
+    await api.rooms({ roomId }).leave.post({ username });
     router.push("/");
   }, [roomId, username, router]);
 
@@ -534,19 +557,6 @@ const Page = () => {
             <span className="text-xs text-muted uppercase hidden sm:block">room id</span>
             <div className="flex items-center gap-2">
               <span className="font-bold text-green-500 truncate">{roomId}</span>
-              {status !== "connected" && (
-                <span
-                  className={`flex items-center gap-1.5 text-[10px] ${status === "error" ? "text-red-400" : "text-yellow-400"
-                    }`}
-                  title={status === "error" ? "Connection lost" : "Reconnecting..."}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${status === "error" ? "bg-red-400" : "bg-yellow-400 animate-pulse-subtle"
-                      }`}
-                  />
-                  <span className="hidden sm:inline">{status === "error" ? "Disconnected" : "Reconnecting"}</span>
-                </span>
-              )}
               <Button
                 variant="ghost"
                 onClick={copyLink}
@@ -561,10 +571,39 @@ const Page = () => {
                 <span className="hidden sm:inline">{copied ? "COPIED" : "COPY"}</span>
               </Button>
             </div>
+            <RoomStatus
+              connectionStatus={status === "connected" ? "connected" : status === "error" ? "error" : "connecting"}
+              isE2EE={e2eeEnabled}
+              participantCount={participantCount}
+              maxParticipants={roomInfo?.maxUsers ?? 10}
+            />
           </div>
         </div>
 
-        <div className="flex items-center justify-center shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+        <div className="flex items-center justify-center gap-2 shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+          <Button
+            variant="ghost"
+            onClick={handleKeepAlive}
+            disabled={!canExtend || keepAliveInProgressRef.current}
+            title={canExtend ? "Extend room by 10 minutes" : "Maximum 7 days reached"}
+            aria-label={canExtend ? "Extend room duration" : "Cannot extend - maximum duration reached"}
+            className={`flex items-center gap-1 text-xs px-2 py-1.5 h-auto rounded border transition-all ${
+              !canExtend 
+                ? "opacity-50 cursor-not-allowed border-border text-muted"
+                : extendSuccess
+                  ? "border-green-500 text-green-500 bg-green-500/10"
+                  : "border-border hover:border-green-500 text-muted hover:text-green-500"
+            }`}
+          >
+            {keepAliveInProgressRef.current ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : extendSuccess ? (
+              <Check size={12} />
+            ) : (
+              <Plus size={12} />
+            )}
+            <span className="hidden sm:inline">+10m</span>
+          </Button>
           <DestructButton
             timeRemaining={timeRemaining}
             onDestroy={handleDestroy}
@@ -611,7 +650,7 @@ const Page = () => {
                   </span>
                   <div
                     className={`max-w-[85%] sm:max-w-[70%] px-3 py-2 rounded-lg text-sm ${item.data.sender === username
-                      ? "bg-green-600/20 text-green-100 border border-green-700/30"
+                      ? "bg-green-100 dark:bg-green-600/20 text-green-900 dark:text-green-100 border border-green-200 dark:border-green-700/30"
                       : "bg-surface-elevated text-foreground border border-border/30"
                       }`}
                   >
