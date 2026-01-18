@@ -4,10 +4,11 @@ import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/client";
 import { generateKeyPair, exportPublicKey, storePrivateKey } from "@/lib/crypto";
+import { ROOM_TYPE_CONFIG, type RoomType } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import "nanoid";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +18,27 @@ function App() {
   const router = useRouter();
   const { toast } = useToast();
   const [roomId, setRoomId] = useState("");
+  const [roomType, setRoomType] = useState<RoomType>("private");
 
   const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
-      const keyPair = await generateKeyPair();
-      const publicKey = await exportPublicKey(keyPair.publicKey);
-      const res = await api.rooms.create.post({ publicKey });
+      let publicKey: string | undefined;
+      let privateKey: CryptoKey | undefined;
+      
+      if (roomType === "private") {
+        const keyPair = await generateKeyPair();
+        publicKey = await exportPublicKey(keyPair.publicKey);
+        privateKey = keyPair.privateKey;
+      }
+      
+      const res = await api.rooms.create.post({ publicKey, type: roomType });
       if (res.status === 200 && res.data?.roomId) {
         const newRoomId = res.data.roomId;
-        storePrivateKey(newRoomId, keyPair.privateKey);
+        
+        if (privateKey) {
+          storePrivateKey(newRoomId, privateKey);
+        }
+        
         const roomUrl = `${window.location.origin}/room/${newRoomId}`;
         
         await navigator.clipboard.writeText(roomUrl);
@@ -74,6 +87,38 @@ function App() {
         <div className="border border-border bg-surface/50 p-6 backdrop-blur-md">
           <div className="space-y-5">
             <div className="space-y-2">
+              <label className="flex items-center text-muted">
+                Room Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["private", "group"] as const).map((type) => {
+                  const config = ROOM_TYPE_CONFIG[type];
+                  const isSelected = roomType === type;
+                  const Icon = type === "private" ? Lock : Users;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setRoomType(type)}
+                      className={`flex flex-col items-center gap-2 p-4 border transition-all ${
+                        isSelected
+                          ? "border-green-500 bg-green-500/10"
+                          : "border-border bg-surface-sunken hover:border-border-strong"
+                      }`}
+                    >
+                      <Icon size={20} className={isSelected ? "text-green-500" : "text-muted"} />
+                      <span className={`text-sm font-bold ${isSelected ? "text-green-500" : "text-foreground"}`}>
+                        {config.label}
+                      </span>
+                      <span className="text-xs text-muted text-center">
+                        {config.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-2">
               <label className="flex items-center text-muted ">
                 Your Identity
               </label>
@@ -94,8 +139,16 @@ function App() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   CREATING...
                 </>
+              ) : roomType === "private" ? (
+                <>
+                  <Lock size={14} />
+                  CREATE PRIVATE ROOM
+                </>
               ) : (
-                "CREATE SECURE ROOM"
+                <>
+                  <Users size={14} />
+                  CREATE GROUP ROOM
+                </>
               )}
             </Button>
 

@@ -37,14 +37,14 @@ input: '/?error=room-full'
   - Change `if count >= 2` → `if count >= 10`
   - Acceptance: Lua script allows up to 10 users
 
-- [ ] Handle E2EE for multi-party rooms
-  - **Decision Required**: Current E2EE is 2-party ECDH
-  - Options:
-    - A) Group key rotation (complex, v3+)
-    - B) Pairwise keys (N×N overhead)
-    - C) Disable E2EE for rooms with >2 users (recommended for v2)
-  - Recommendation: Show room type selector: "Private (2 users, E2EE)" vs "Group (10 users)"
-  - Files: `src/hooks/use-e2ee.ts`, `src/app/room/[roomId]/page.tsx`
+- [x] Handle E2EE for multi-party rooms
+  - Implemented: Room type selector ("private" vs "group")
+  - Private rooms: 2 users max, E2EE enabled
+  - Group rooms: up to 10 users, E2EE disabled
+  - API stores room type and e2ee flag in metadata
+  - useE2EE hook checks room info and skips encryption for group rooms
+  - UI: Room type selector on home page with Lock/Users icons
+  - Files: `src/lib/constants.ts`, `src/app/api/rooms/index.ts`, `src/proxy.ts`, `src/hooks/use-e2ee.ts`, `src/app/page.tsx`, `src/app/room/[roomId]/page.tsx`, `src/lib/lua-scripts.ts`
 
 - [ ] Add participant count display in room header
   - Show "2/10 users" or similar badge

@@ -16,7 +16,7 @@ describe("JOIN_SCRIPT", () => {
   beforeEach(cleanup);
 
   test("allows first user to join empty room", async () => {
-    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1"]);
+    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1", "2"]);
     expect(result).toBe(1);
 
     const members = await redis.smembers(CONNECTED_KEY);
@@ -26,7 +26,7 @@ describe("JOIN_SCRIPT", () => {
   test("allows second user to join room with one user", async () => {
     await redis.sadd(CONNECTED_KEY, "token-1");
 
-    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-2"]);
+    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-2", "2"]);
     expect(result).toBe(1);
 
     const members = await redis.smembers(CONNECTED_KEY);
@@ -35,10 +35,10 @@ describe("JOIN_SCRIPT", () => {
     expect(members).toContain("token-2");
   });
 
-  test("rejects third user when room is full", async () => {
+  test("rejects third user when room is full (maxUsers=2)", async () => {
     await redis.sadd(CONNECTED_KEY, "token-1", "token-2");
 
-    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-3"]);
+    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-3", "2"]);
     expect(result).toBe(0);
 
     const members = await redis.smembers(CONNECTED_KEY);
@@ -46,9 +46,21 @@ describe("JOIN_SCRIPT", () => {
     expect(members).not.toContain("token-3");
   });
 
+  test("allows up to 10 users when maxUsers=10", async () => {
+    for (let i = 1; i <= 9; i++) {
+      await redis.sadd(CONNECTED_KEY, `token-${i}`);
+    }
+    
+    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-10", "10"]);
+    expect(result).toBe(1);
+    
+    const rejectResult = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-11", "10"]);
+    expect(rejectResult).toBe(0);
+  });
+
   test("is idempotent for same token", async () => {
-    await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1"]);
-    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1"]);
+    await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1", "2"]);
+    const result = await redis.eval(JOIN_SCRIPT, [CONNECTED_KEY], ["token-1", "2"]);
     expect(result).toBe(1);
 
     const members = await redis.smembers(CONNECTED_KEY);
@@ -135,21 +147,21 @@ describe("integration: join and leave flow", () => {
     const joinResult1 = await redis.eval(
       JOIN_SCRIPT,
       [CONNECTED_KEY],
-      ["token-1"]
+      ["token-1", "2"]
     );
     expect(joinResult1).toBe(1);
 
     const joinResult2 = await redis.eval(
       JOIN_SCRIPT,
       [CONNECTED_KEY],
-      ["token-2"]
+      ["token-2", "2"]
     );
     expect(joinResult2).toBe(1);
 
     const joinResult3Blocked = await redis.eval(
       JOIN_SCRIPT,
       [CONNECTED_KEY],
-      ["token-3"]
+      ["token-3", "2"]
     );
     expect(joinResult3Blocked).toBe(0);
 
@@ -162,7 +174,7 @@ describe("integration: join and leave flow", () => {
     const joinResult3 = await redis.eval(
       JOIN_SCRIPT,
       [CONNECTED_KEY],
-      ["token-3"]
+      ["token-3", "2"]
     );
     expect(joinResult3).toBe(1);
 

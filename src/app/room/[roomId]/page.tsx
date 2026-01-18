@@ -95,7 +95,7 @@ const Page = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
 
-  const { status: e2eeStatus, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
+  const { status: e2eeStatus, isEnabled: e2eeEnabled, encryptMessage, decryptMessage, handleKeyExchange } = useE2EE({
     roomId,
     username,
   });
@@ -227,7 +227,7 @@ const Page = () => {
       if (payload.event === "chat.message") {
         const newMessage = payload.data as Message;
         setRealtimeMessages((prev) => [...prev, newMessage]);
-        if (e2eeStatus === "ready") {
+        if (e2eeEnabled && e2eeStatus === "ready") {
           const decrypted = await decryptMessage(newMessage.text);
           setDecryptedMessages((prev) => ({ ...prev, [newMessage.id]: decrypted }));
         }
@@ -235,6 +235,7 @@ const Page = () => {
           setUnreadCount((prev) => prev + 1);
         }
       } else if (payload.event === "chat.keyExchange") {
+        if (!e2eeEnabled) return;
         const keyData = payload.data as { publicKey: string; username: string };
         if (keyData.username !== username) {
           handleKeyExchange(keyData.publicKey);
@@ -270,7 +271,7 @@ const Page = () => {
         }
       }
     },
-    [router, username, isAtBottom, e2eeStatus, decryptMessage, handleKeyExchange, toast],
+    [router, username, isAtBottom, e2eeStatus, e2eeEnabled, decryptMessage, handleKeyExchange, toast],
   );
 
   const { status } = useRealtime({
@@ -322,7 +323,7 @@ const Page = () => {
   }, [messages, systemMessages, isAtBottom]);
 
   useEffect(() => {
-    if (e2eeStatus !== "ready" || messages.length === 0) return;
+    if (!e2eeEnabled || e2eeStatus !== "ready" || messages.length === 0) return;
     const decryptAll = async () => {
       const newDecrypted: Record<string, string> = {};
       for (const msg of messages) {
@@ -335,7 +336,7 @@ const Page = () => {
       }
     };
     decryptAll();
-  }, [e2eeStatus, messages, decryptMessage, decryptedMessages]);
+  }, [e2eeStatus, e2eeEnabled, messages, decryptMessage, decryptedMessages]);
 
   useEffect(() => {
     if (hasEmittedJoin.current || !username) return;
@@ -413,7 +414,7 @@ const Page = () => {
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
-      const encryptedText = e2eeStatus === "ready" ? await encryptMessage(text) : text;
+      const encryptedText = e2eeEnabled && e2eeStatus === "ready" ? await encryptMessage(text) : text;
       await api.messages.post(
         { sender: username, text: encryptedText },
         { query: { roomId } },

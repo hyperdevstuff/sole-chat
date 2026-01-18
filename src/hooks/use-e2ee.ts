@@ -12,7 +12,7 @@ import {
   getPrivateKey,
 } from "@/lib/crypto";
 
-type E2EEStatus = "initializing" | "waiting" | "ready" | "error";
+type E2EEStatus = "initializing" | "waiting" | "ready" | "error" | "disabled";
 
 interface UseE2EEOptions {
   roomId: string;
@@ -33,6 +33,16 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
 
     const init = async () => {
       try {
+        const infoRes = await api.rooms({ roomId }).info.get();
+        if (infoRes.error) throw new Error("Failed to fetch room info");
+        
+        const roomInfo = infoRes.data as { type: string; e2ee: boolean };
+        
+        if (!roomInfo.e2ee || roomInfo.type === "group") {
+          setStatus("disabled");
+          return;
+        }
+
         const existingPrivateKey = getPrivateKey(roomId);
         const keysRes = await api.rooms({ roomId }).keys.get();
         if (keysRes.error) throw new Error("Failed to fetch keys");
@@ -81,7 +91,7 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
 
   const handleKeyExchange = useCallback(
     async (peerPublicKey: string) => {
-      if (!privateKeyRef.current || sharedKeyRef.current) return;
+      if (!privateKeyRef.current || sharedKeyRef.current || status === "disabled") return;
       try {
         const peerKey = await importPublicKey(peerPublicKey);
         sharedKeyRef.current = await deriveSharedKey(privateKeyRef.current, peerKey);
@@ -91,27 +101,28 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
         setError("Key exchange failed");
       }
     },
-    []
+    [status]
   );
 
   const encryptMessage = useCallback(async (plaintext: string): Promise<string> => {
-    if (!sharedKeyRef.current) return plaintext;
+    if (!sharedKeyRef.current || status === "disabled") return plaintext;
     return encrypt(plaintext, sharedKeyRef.current);
-  }, []);
+  }, [status]);
 
   const decryptMessage = useCallback(async (ciphertext: string): Promise<string> => {
-    if (!sharedKeyRef.current) return ciphertext;
+    if (!sharedKeyRef.current || status === "disabled") return ciphertext;
     try {
       return await decrypt(ciphertext, sharedKeyRef.current);
     } catch {
       return "[Decryption failed]";
     }
-  }, []);
+  }, [status]);
 
   return {
     status,
     error,
     isCreator: isCreatorRef.current,
+    isEnabled: status !== "disabled",
     encryptMessage,
     decryptMessage,
     handleKeyExchange,

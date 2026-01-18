@@ -2,15 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "./lib/redis";
 import { nanoid } from "nanoid";
 import { JOIN_SCRIPT } from "./lib/lua-scripts";
+import { MAX_USERS_PER_ROOM } from "./lib/constants";
+
+interface RoomMeta extends Record<string, unknown> {
+  createdAt: string;
+  maxUsers?: string;
+  type?: string;
+  e2ee?: string;
+}
 
 export const proxy = async (req: NextRequest) => {
   const pathname = req.nextUrl.pathname;
   const roomMatch = pathname.match(/^\/room\/([^/]+)$/);
   if (!roomMatch) return NextResponse.redirect(new URL("/", req.url));
   const roomId = roomMatch[1];
-  const meta = await redis.hgetall<{ createdAt: string }>(`meta:${roomId}`);
+  const meta = await redis.hgetall<RoomMeta>(`meta:${roomId}`);
   if (!meta)
     return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
+
+  const maxUsers = meta.maxUsers ? parseInt(meta.maxUsers, 10) : MAX_USERS_PER_ROOM;
 
   const existingToken = req.cookies.get("x-auth-token")?.value;
   if (existingToken) {
@@ -29,20 +39,16 @@ export const proxy = async (req: NextRequest) => {
       return NextResponse.next();
     }
   }
-  // Generate token first, but only set cookie after Lua confirms join
   const token = nanoid();
 
-  // Atomic join: only add if room has < 2 users
   const joined = await redis.eval(
     JOIN_SCRIPT,
     [`connected:${roomId}`],
-    [token],
+    [token, maxUsers.toString()],
   );
 
-  // If room is full, redirect WITHOUT setting any cookie
   if (!joined) return NextResponse.redirect(new URL("/?error=room-full", req.url));
 
-  // Only set cookie AFTER Lua script confirms successful join
   const response = NextResponse.next();
   response.cookies.set("x-auth-token", token, {
     path: "/",
