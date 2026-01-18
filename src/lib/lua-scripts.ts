@@ -4,7 +4,7 @@
  */
 
 /**
- * Atomic join script: Only adds user if room has < 2 users.
+ * Atomic join script: Only adds user if room has < 10 users.
  * 
  * KEYS[1]: connected:{roomId} - SET of connected tokens
  * ARGV[1]: token - The auth token to add
@@ -15,7 +15,7 @@
  */
 export const JOIN_SCRIPT = `
 local count = redis.call('SCARD', KEYS[1])
-if count >= 2 then
+if count >= 10 then
   return 0
 end
 redis.call('SADD', KEYS[1], ARGV[1])

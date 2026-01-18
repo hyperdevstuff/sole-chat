@@ -31,4 +31,4 @@ export const WARNING_THRESHOLD_10S = 10;
 // Room Constraints
 
 /** Maximum number of users per room */
-export const MAX_USERS_PER_ROOM = 2;
+export const MAX_USERS_PER_ROOM = 10;

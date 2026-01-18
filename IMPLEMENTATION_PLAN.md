@@ -29,11 +29,11 @@ input: '/?error=room-full'
 
 ### 1.1 Increase Room Participant Limit to 10
 
-- [ ] Update constant (file: `src/lib/constants.ts`)
+- [x] Update constant (file: `src/lib/constants.ts`)
   - Change `MAX_USERS_PER_ROOM = 2` → `MAX_USERS_PER_ROOM = 10`
   - Acceptance: Constant reflects new limit
 
-- [ ] Update Lua join script (file: `src/lib/lua-scripts.ts`)
+- [x] Update Lua join script (file: `src/lib/lua-scripts.ts`)
   - Change `if count >= 2` → `if count >= 10`
   - Acceptance: Lua script allows up to 10 users
 
