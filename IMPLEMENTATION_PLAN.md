@@ -131,11 +131,11 @@ Button and Input components were created (commit: 50089fa) but are not imported 
   - File: `src/app/page.tsx`
   - Used className overrides for exact visual match (rounded-none, h-auto)
 
-- [ ] Migrate room page to use shared components
-  - Replace 4 inline buttons (send, exit, settings, new messages badge)
-  - Replace 1 inline input (message input)
+- [x] Migrate room page to use shared components
+  - Replaced 4 inline buttons (copy link, exit, new messages badge, send)
+  - Replaced 1 inline input (message input)
   - File: `src/app/room/[roomId]/page.tsx`
-  - **MUST USE**: frontend-ui-ux-engineer agent
+  - Used className overrides for exact visual match (h-auto, rounded-none)
 
 - [ ] Migrate modals to use Button component
   - expired-modal.tsx: 2 buttons

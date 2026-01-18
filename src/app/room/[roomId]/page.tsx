@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DestructButton } from "@/components/destruct-button";
 import { DestructModal } from "@/components/destruct-modal";
 import { ExpiredModal } from "@/components/expired-modal";
@@ -543,10 +545,11 @@ const Page = () => {
                   <span className="hidden sm:inline">{status === "error" ? "Disconnected" : "Reconnecting"}</span>
                 </span>
               )}
-              <button
+              <Button
+                variant="ghost"
                 onClick={copyLink}
                 aria-label={copied ? "Room link copied to clipboard" : "Copy room link to clipboard"}
-                className="flex items-center gap-1.5 text-[10px] bg-surface-elevated hover:bg-surface-elevated/80 px-2 py-2 sm:py-1 rounded text-muted hover:text-foreground transition-colors cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 text-[10px] bg-surface-elevated hover:bg-surface-elevated/80 px-2 py-2 sm:py-1 h-auto rounded text-muted hover:text-foreground shrink-0"
               >
                 {copied ? (
                   <ClipboardCheck size={12} />
@@ -554,7 +557,7 @@ const Page = () => {
                   <Clipboard size={12} />
                 )}
                 <span className="hidden sm:inline">{copied ? "COPIED" : "COPY"}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -568,15 +571,16 @@ const Page = () => {
 
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle />
-          <button
+          <Button
+            variant="ghost"
             onClick={handleExit}
             aria-label="Exit room without destroying"
-            className="flex items-center gap-1.5 text-xs border border-border hover:border-border-strong text-muted hover:text-foreground p-2 sm:px-3 sm:py-2 rounded transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs border border-border hover:border-border-strong text-muted hover:text-foreground p-2 sm:px-3 sm:py-2 h-auto rounded"
             title="Leave room without destroying"
           >
             <LogOut size={14} />
             <span className="hidden sm:inline">Exit</span>
-          </button>
+          </Button>
         </div>
       </header>
       <div
@@ -623,10 +627,10 @@ const Page = () => {
         )}
         <div ref={messagesEndRef} />
         {unreadCount > 0 && !isAtBottom && (
-          <button
+          <Button
             onClick={scrollToBottom}
             aria-label={`${unreadCount} new message${unreadCount > 1 ? "s" : ""} - click to scroll down`}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg transition-all animate-fade-in cursor-pointer flex items-center gap-2"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 h-auto rounded-full shadow-lg animate-fade-in flex items-center gap-2"
           >
             <span>{unreadCount} new message{unreadCount > 1 ? "s" : ""}</span>
             <svg
@@ -642,7 +646,7 @@ const Page = () => {
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
-          </button>
+          </Button>
         )}
       </div>
       <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border bg-surface/30">
@@ -651,7 +655,7 @@ const Page = () => {
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-pulse">
               {">"}
             </span>
-            <input
+            <Input
               aria-label="Message input"
               value={input}
               onChange={handleInputChange}
@@ -667,10 +671,11 @@ const Page = () => {
               placeholder={showExpiredModal ? "Room expired" : "Type Message..."}
               type="text"
               disabled={showExpiredModal}
-              className="w-full bg-surface-sunken border border-border focus:border-border-strong focus:outline-none transition-colors text-foreground placeholder:text-muted-foreground py-3 pl-8 pr-4 text-base text-wrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-surface-sunken border border-border focus:border-border-strong py-3 pl-8 pr-4 text-base h-auto rounded-none focus-visible:ring-0 shadow-none"
             />
           </div>
-          <button
+          <Button
+            variant="secondary"
             aria-label="Send message"
             onClick={() => {
               if (input.trim()) {
@@ -680,10 +685,10 @@ const Page = () => {
               }
             }}
             disabled={!input.trim() || showExpiredModal}
-            className="bg-surface-elevated px-6 min-h-[44px] min-w-[44px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="bg-surface-elevated px-6 min-h-[44px] min-w-[44px] h-auto rounded-none"
           >
             <SendIcon width={18}></SendIcon>
-          </button>
+          </Button>
         </div>
       </div>
     </main>
