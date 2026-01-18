@@ -94,17 +94,18 @@ input: '/?error=room-full'
 
 Current: 23 toast calls. Target: ~10 (essential errors only).
 
-- [ ] Remove redundant success toasts
+- [x] Remove redundant success toasts
   - "Room created! Link copied" → rely on clipboard icon feedback
   - "Secure connection established" → add lock icon in header instead
   - "Reconnected to chat" → status dot already shows this
-  - "Room extended" → timer update is sufficient feedback
+  - "Room extended" → timer update is sufficient feedback (already absent)
   - File: `src/app/room/[roomId]/page.tsx`, `src/app/page.tsx`
 
-- [ ] Keep essential toasts
+- [x] Keep essential toasts
   - All error toasts (failures need attention)
   - Connection lost warning (important for UX)
   - Max extension reached notification
+  - Room expiry warnings (60s, 10s)
 
 ### 2.2 Add Connection/Encryption Status to Header
 

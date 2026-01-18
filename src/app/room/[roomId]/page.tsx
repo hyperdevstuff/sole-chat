@@ -260,7 +260,6 @@ const Page = () => {
         const keyData = payload.data as { publicKey: string; username: string };
         if (keyData.username !== username) {
           handleKeyExchange(keyData.publicKey);
-          toast({ message: "Secure connection established.", type: "success" });
         }
       } else if (payload.event === "chat.destroy") {
         router.push("/");
@@ -311,7 +310,6 @@ const Page = () => {
 
     if (prev === "connecting" && status === "connected") {
       if (hasConnectedBefore.current) {
-        toast({ message: "Reconnected to chat.", type: "success" });
         if (username) {
           fetch("/api/realtime", {
             method: "POST",

@@ -47,11 +47,6 @@ function App() {
         const roomUrl = `${window.location.origin}/room/${newRoomId}`;
         
         await navigator.clipboard.writeText(roomUrl);
-        toast({ 
-          message: "Room created! Link copied to clipboard.", 
-          type: "success" 
-        });
-        
         router.push(`/room/${newRoomId}`);
       }
     },
