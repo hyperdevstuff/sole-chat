@@ -33,13 +33,67 @@ The app now has full E2EE. Messages are encrypted client-side before sending to 
 
 ---
 
+## Priority 0.5: Migrate to next-themes (Theming Simplification)
+
+### Why next-themes?
+Current custom theme system has ~50 lines of code that next-themes handles automatically:
+- FOUC prevention (no custom inline script needed)
+- System preference detection
+- Hydration mismatch handling
+- localStorage persistence
+
+### Migration Steps
+
+- [x] Install next-themes
+  ```bash
+  bun add next-themes
+  ```
+  - Acceptance: Package in dependencies
+
+- [x] Update providers.tsx to use ThemeProvider from next-themes
+  - File: `src/lib/providers.tsx`
+  - Add `<ThemeProvider attribute="class" defaultTheme="system" enableSystem>`
+  - Acceptance: Theme provider wraps app
+
+- [x] Update use-theme.ts to wrap next-themes
+  - File: `src/hooks/use-theme.ts`
+  - Replace custom implementation with next-themes' `useTheme()`
+  - Keep `mounted` check for hydration safety
+  - Acceptance: Hook works with same API
+
+- [x] Remove custom theme utilities
+  - Delete: `src/lib/theme.ts` (getStoredTheme, setStoredTheme, getSystemTheme)
+  - Remove: `themeInitScript` from `src/app/layout.tsx`
+  - Acceptance: No custom FOUC prevention code
+
+- [x] Fix page.tsx hardcoded colors (file: `src/app/page.tsx`)
+  - `text-neutral-500` → `text-muted`
+  - `border-neutral-800 bg-neutral-900/50` → `border-border bg-surface/50`
+  - `bg-neutral-950 border-neutral-800 text-neutral-400` → `bg-surface-sunken border-border text-muted`
+  - `bg-neutral-100 text-black` → theme-aware button styling
+  - **MUST USE**: frontend-ui-ux-engineer agent
+
+- [x] Fix theme-toggle.tsx hardcoded colors (file: `src/components/theme-toggle.tsx`)
+  - `bg-neutral-800` skeleton → `bg-surface-elevated`
+  - `bg-neutral-100 dark:bg-neutral-800` → `bg-surface-elevated`
+  - **MUST USE**: frontend-ui-ux-engineer agent
+
+- [x] Verify theme switching works
+  - Test light/dark toggle
+  - Test system preference detection
+  - Test persistence across refresh
+  - Acceptance: Seamless theme switching without FOUC
+
+
+---
+
 ## Priority 1: Complete Home Page Theme Migration (Use frontend-ui-ux-engineer)
 
 ### VERIFIED GAP: Home Page Uses Hardcoded Colors
 
 The home page (`src/app/page.tsx`) still uses `neutral-*` classes that will break in light mode.
 
-- [ ] Migrate page.tsx to theme tokens (file: `src/app/page.tsx`)
+- [x] Migrate page.tsx to theme tokens (file: `src/app/page.tsx`)
   - Line 64: `text-neutral-500` → `text-muted`
   - Line 68: `border-neutral-800 bg-neutral-900/50` → `border-border bg-surface/50`
   - Line 75: `bg-neutral-950 border-neutral-800 text-neutral-400` → `bg-surface-sunken border-border text-muted`
@@ -49,7 +103,7 @@ The home page (`src/app/page.tsx`) still uses `neutral-*` classes that will brea
 
 ### VERIFIED GAP: Theme Toggle Uses Hardcoded Colors
 
-- [ ] Migrate theme-toggle.tsx to theme tokens (file: `src/components/theme-toggle.tsx`)
+- [x] Migrate theme-toggle.tsx to theme tokens (file: `src/components/theme-toggle.tsx`)
   - Line 16: `bg-neutral-800` skeleton → `bg-surface-elevated`
   - Line 25: `bg-neutral-100 dark:bg-neutral-800` → `bg-surface-elevated border-border`
   - Acceptance: Toggle visible and consistent in both themes

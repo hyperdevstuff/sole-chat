@@ -13,7 +13,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="h-8 w-8 rounded-lg bg-neutral-800 animate-pulse" />
+      <div className="h-8 w-8 rounded-lg bg-surface-elevated animate-pulse" />
     );
   }
 
@@ -22,7 +22,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+      className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated text-muted transition-colors hover:text-foreground border border-border"
     >
       <Sun
         className={`h-4 w-4 transition-all duration-200 ${
