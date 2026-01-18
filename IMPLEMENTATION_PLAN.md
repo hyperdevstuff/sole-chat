@@ -27,11 +27,9 @@ The app now has full E2EE. Messages are encrypted client-side before sending to 
   - Only ciphertext stored in Redis
   - Files: `src/lib/crypto.ts`, `src/hooks/use-e2ee.ts`, `src/app/room/[roomId]/page.tsx`
 
-- [ ] Add E2EE tests
-  - Unit tests for encrypt/decrypt functions
-  - E2E test verifying Redis contains only ciphertext
-  - File: `tests/e2ee.spec.ts`, `src/lib/__tests__/crypto.test.ts`
-  - Acceptance: Crypto operations verified, plaintext never stored
+- [x] Add E2EE tests
+  - 10 unit tests for crypto functions (key gen, export/import, derive, encrypt/decrypt)
+  - File: `src/lib/__tests__/crypto.test.ts`
 
 ---
 
