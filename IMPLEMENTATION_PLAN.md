@@ -201,25 +201,22 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 
 ### Migrate Remaining Buttons to Shared Component
 
-- [ ] Migrate modal buttons (file: `src/components/destruct-modal.tsx`)
+- [x] Migrate modal buttons (file: `src/components/destruct-modal.tsx`)
   - "Export & Destroy" → `<Button variant="success">`
-  - "Just Destroy" → `<Button variant="danger">`
+  - "Just Destroy" → `<Button variant="danger-subtle">`
   - "Cancel" → `<Button variant="ghost">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+  - Added `success` and `danger-subtle` variants to Button component
 
-- [ ] Migrate expired modal buttons (file: `src/components/expired-modal.tsx`)
+- [x] Migrate expired modal buttons (file: `src/components/expired-modal.tsx`)
   - "Export Chat" → `<Button variant="success">`
   - "Create New Room" → `<Button variant="secondary">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
-- [ ] Migrate theme toggle (file: `src/components/theme-toggle.tsx`)
-  - Use `<Button variant="ghost">` wrapper
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+- [x] Migrate theme toggle (file: `src/components/theme-toggle.tsx`)
+  - Uses `<Button variant="ghost" size="sm">` with custom className overrides
 
-- [ ] Migrate toast buttons (file: `src/components/toast.tsx`)
+- [x] Migrate toast buttons (file: `src/components/toast.tsx`)
   - Action button → `<Button variant="ghost" size="sm">`
   - Dismiss button → `<Button variant="ghost" size="sm">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
 ---
 

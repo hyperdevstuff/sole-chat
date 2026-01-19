@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useFocusTrap } from "../hooks/use-focus-trap";
+import { Button } from "@/components/ui/button";
 
 interface ExpiredModalProps {
   isOpen: boolean;
@@ -47,20 +48,22 @@ export function ExpiredModal({
         </p>
 
         <div className="flex flex-col gap-3">
-          <button
+          <Button
             onClick={onExport}
             aria-label="Export chat history"
-            className="w-full py-2.5 px-4 bg-success-subtle hover:bg-success-subtle-hover border border-success-subtle-border text-success-subtle-foreground rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            variant="success"
+            className="w-full"
           >
             Export Chat
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onCreateNew}
             aria-label="Create a new chat room"
-            className="w-full py-2.5 px-4 bg-surface-elevated hover:bg-surface-elevated/80 border border-border text-foreground rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            variant="secondary"
+            className="w-full"
           >
             Create New Room
-          </button>
+          </Button>
         </div>
       </div>
     </div>
