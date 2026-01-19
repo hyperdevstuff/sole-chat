@@ -1,8 +1,8 @@
 # Implementation Plan
 
-**Updated:** 2026-01-18 (v2 Planning)
+**Updated:** 2026-01-19 (E2EE Fix)
 **Branch:** dev
-**Last Commit:** f121eef fix: resolve all ship blockers (lint errors, typos, docs)
+**Last Commit:** (pending)
 
 ---
 
@@ -230,6 +230,10 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] ESLint errors fixed (commit: f121eef)
 - [x] README updated with project documentation
 - [x] .env.example created
+- [x] **E2EE Key Exchange Fix** - Added missing PUT handler to route.ts
+  - Root cause: PUT /api/rooms/:roomId/keys was returning 405 Method Not Allowed
+  - Fix: Added `export const PUT = App.handle;` to route.ts
+  - This allows joiner to store their public key, which triggers keyExchange event to creator
 
 ### Theme Infrastructure - COMPLETE
 
