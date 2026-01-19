@@ -50,7 +50,7 @@ export function ExpiredModal({
           <button
             onClick={onExport}
             aria-label="Export chat history"
-            className="w-full py-2.5 px-4 bg-green-100 dark:bg-green-600/20 hover:bg-green-200 dark:hover:bg-green-600/30 border border-green-200 dark:border-green-600/40 text-green-700 dark:text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 bg-success-subtle hover:bg-success-subtle-hover border border-success-subtle-border text-success-subtle-foreground rounded-lg font-medium text-sm transition-colors cursor-pointer"
           >
             Export Chat
           </button>

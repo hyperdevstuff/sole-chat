@@ -70,7 +70,7 @@ export function DestructButton({
       {/* red overlay - only clips when holding */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center gap-2 rounded-full bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-400"
+        className="absolute inset-0 flex items-center justify-center gap-2 rounded-full bg-danger-subtle text-danger-subtle-foreground"
         style={{
           clipPath: isHolding
             ? "inset(0px 0px 0px 0px)"
@@ -107,8 +107,8 @@ export function DestructButton({
         <span
           className={
             timeRemaining !== null && timeRemaining < 60
-              ? "text-red-600 dark:text-red-400"
-              : "text-amber-600 dark:text-amber-400"
+              ? "text-destructive"
+              : "text-warning"
           }
         >
           {timeRemaining !== null
@@ -119,7 +119,7 @@ export function DestructButton({
 
       {/* hover text */}
       {isHovering && !isHolding && (
-        <div className="absolute inset-0 flex items-center justify-center gap-2 text-red-600 dark:text-red-400 whitespace-nowrap">
+        <div className="absolute inset-0 flex items-center justify-center gap-2 text-destructive whitespace-nowrap">
           <svg
             height="16"
             strokeLinejoin="round"

@@ -155,6 +155,46 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
   - Improved typography with uppercase tracking
   - File: `src/app/page.tsx`
 
+### 2.5 Theming Consolidation (Eliminate `dark:` variants)
+
+**Problem**: Mixed theming approaches - some components use semantic tokens, others use hardcoded `dark:` variants.
+
+- [x] Add missing semantic tokens to `globals.css`
+  - `--success`, `--success-foreground` (green button primary)
+  - `--success-subtle`, `--success-subtle-foreground` (green soft background)
+  - `--warning`, `--warning-foreground` (amber timer)
+  - `--warning-subtle`, `--warning-subtle-foreground` (amber soft background)
+  - `--danger-subtle`, `--danger-subtle-foreground` (red soft background)
+  - Map all in `@theme inline` block
+  - Acceptance: All tokens available as Tailwind classes
+
+- [x] Migrate `destruct-button.tsx` (4 `dark:` usages)
+  - Line 73: `bg-red-100 dark:bg-red-900` → `bg-danger-subtle`
+  - Line 73: `text-red-900 dark:text-red-400` → `text-danger-subtle-foreground`
+  - Lines 110-111: `text-red-600 dark:text-red-400` → `text-destructive`
+  - Line 111: `text-amber-600 dark:text-amber-400` → `text-warning`
+  - Line 122: `text-red-600 dark:text-red-400` → `text-destructive`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `destruct-modal.tsx` (2 `dark:` usages)
+  - Line 56: green button → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Line 63: red button → `bg-danger-subtle text-danger-subtle-foreground border-danger-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `expired-modal.tsx` (1 `dark:` usage)
+  - Line 53: green button → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `room/[roomId]/page.tsx` (1 `dark:` usage)
+  - Line 652: own message bubble → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Verify theming consistency
+  - Run: `grep -r "dark:" src/components/` returns 0 results
+  - Test light mode visual appearance
+  - Test dark mode visual appearance
+  - Acceptance: Both modes look correct, no hardcoded colors
+
 ---
 
 ## Priority 3: Component Migration (Cleanup)
@@ -372,18 +412,31 @@ type RoomConfig = {
 
 ## CSS Variable Reference
 
-| Variable | Light | Dark | Usage |
-|----------|-------|------|-------|
-| `--background` | #ffffff | #0a0a0a | Page background |
-| `--foreground` | #171717 | #ededed | Primary text |
-| `--surface` | #f5f5f5 | #171717 | Card backgrounds |
-| `--surface-elevated` | #ffffff | #262626 | Buttons, modals |
-| `--surface-sunken` | #e5e5e5 | #0a0a0a | Input backgrounds |
-| `--border` | #e5e5e5 | #262626 | Default borders |
-| `--border-strong` | #d4d4d4 | #404040 | Emphasized borders |
-| `--muted` | #737373 | #a3a3a3 | Secondary text |
-| `--accent` | #22c55e | #22c55e | Green accent |
-| `--destructive` | #ef4444 | #dc2626 | Red/danger |
+| Token | Light | Dark | Tailwind Classes |
+|-------|-------|------|------------------|
+| `background` | #ffffff | #0a0a0a | `bg-background` |
+| `foreground` | #171717 | #ededed | `text-foreground` |
+| `surface` | #f5f5f5 | #171717 | `bg-surface` |
+| `surface-elevated` | #ffffff | #262626 | `bg-surface-elevated` |
+| `surface-sunken` | #e5e5e5 | #0a0a0a | `bg-surface-sunken` |
+| `border` | #e5e5e5 | #262626 | `border-border` |
+| `border-strong` | #d4d4d4 | #404040 | `border-border-strong` |
+| `muted` | #737373 | #a3a3a3 | `text-muted` |
+| `muted-foreground` | #a3a3a3 | #737373 | `text-muted-foreground` |
+| `accent` | #22c55e | #22c55e | `bg-accent text-accent-foreground` |
+| `accent-foreground` | #ffffff | #ffffff | `text-accent-foreground` |
+| `destructive` | #ef4444 | #dc2626 | `bg-destructive text-destructive-foreground` |
+| `destructive-foreground` | #ffffff | #ffffff | `text-destructive-foreground` |
+| `success` | #16a34a | #22c55e | `bg-success text-success-foreground` |
+| `success-foreground` | #ffffff | #ffffff | `text-success-foreground` |
+| `success-subtle` | #dcfce7 | rgba(34,197,94,0.2) | `bg-success-subtle text-success-subtle-foreground` |
+| `success-subtle-foreground` | #166534 | #4ade80 | `text-success-subtle-foreground` |
+| `warning` | #d97706 | #f59e0b | `text-warning` |
+| `warning-foreground` | #ffffff | #000000 | `text-warning-foreground` |
+| `warning-subtle` | #fef3c7 | rgba(245,158,11,0.2) | `bg-warning-subtle text-warning-subtle-foreground` |
+| `warning-subtle-foreground` | #92400e | #fbbf24 | `text-warning-subtle-foreground` |
+| `danger-subtle` | #fee2e2 | rgba(239,68,68,0.2) | `bg-danger-subtle text-danger-subtle-foreground` |
+| `danger-subtle-foreground` | #991b1b | #f87171 | `text-danger-subtle-foreground` |
 
 ---
 

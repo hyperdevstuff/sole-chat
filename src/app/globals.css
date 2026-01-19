@@ -15,6 +15,23 @@
     --accent-foreground: #ffffff;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
+    /* Success tokens (green) */
+    --success: #16a34a;
+    --success-foreground: #ffffff;
+    --success-subtle: #dcfce7;
+    --success-subtle-foreground: #166534;
+    --success-subtle-hover: #bbf7d0;
+    --success-subtle-border: #86efac;
+    /* Warning tokens (amber) */
+    --warning: #d97706;
+    --warning-foreground: #ffffff;
+    --warning-subtle: #fef3c7;
+    --warning-subtle-foreground: #92400e;
+    /* Danger subtle tokens (red soft) */
+    --danger-subtle: #fee2e2;
+    --danger-subtle-foreground: #991b1b;
+    --danger-subtle-hover: #fecaca;
+    --danger-subtle-border: #fca5a5;
 }
 
 /* Dark theme (via .dark class on html) */
@@ -32,6 +49,20 @@
     --accent-foreground: #ffffff;
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
+    --success: #22c55e;
+    --success-foreground: #ffffff;
+    --success-subtle: rgba(34, 197, 94, 0.2);
+    --success-subtle-foreground: #4ade80;
+    --success-subtle-hover: rgba(34, 197, 94, 0.3);
+    --success-subtle-border: rgba(34, 197, 94, 0.4);
+    --warning: #f59e0b;
+    --warning-foreground: #000000;
+    --warning-subtle: rgba(245, 158, 11, 0.2);
+    --warning-subtle-foreground: #fbbf24;
+    --danger-subtle: rgba(239, 68, 68, 0.2);
+    --danger-subtle-foreground: #f87171;
+    --danger-subtle-hover: rgba(239, 68, 68, 0.3);
+    --danger-subtle-border: rgba(239, 68, 68, 0.4);
 }
 
 @theme inline {
@@ -48,6 +79,20 @@
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-success-subtle: var(--success-subtle);
+    --color-success-subtle-foreground: var(--success-subtle-foreground);
+    --color-success-subtle-hover: var(--success-subtle-hover);
+    --color-success-subtle-border: var(--success-subtle-border);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-warning-subtle: var(--warning-subtle);
+    --color-warning-subtle-foreground: var(--warning-subtle-foreground);
+    --color-danger-subtle: var(--danger-subtle);
+    --color-danger-subtle-foreground: var(--danger-subtle-foreground);
+    --color-danger-subtle-hover: var(--danger-subtle-hover);
+    --color-danger-subtle-border: var(--danger-subtle-border);
     --font-mono: var(--font-jetbrains-mono);
 }
 
