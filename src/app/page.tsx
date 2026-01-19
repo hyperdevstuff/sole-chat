@@ -41,7 +41,7 @@ function App() {
         const newRoomId = res.data.roomId;
 
         if (privateKey) {
-          storePrivateKey(newRoomId, privateKey);
+          storePrivateKey(newRoomId, privateKey, true);
         }
 
         const roomUrl = `${window.location.origin}/room/${newRoomId}`;

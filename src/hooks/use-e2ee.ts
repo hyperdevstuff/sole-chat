@@ -43,7 +43,7 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
           return;
         }
 
-        const existingPrivateKey = getPrivateKey(roomId);
+        const storedKeyData = getPrivateKey(roomId);
         const keysRes = await api.rooms({ roomId }).keys.get();
         if (keysRes.error) throw new Error("Failed to fetch keys");
 
@@ -52,13 +52,15 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
           joinerPublicKey: string | null;
         };
 
-        if (existingPrivateKey) {
-          isCreatorRef.current = true;
-          privateKeyRef.current = existingPrivateKey;
+        if (storedKeyData) {
+          isCreatorRef.current = storedKeyData.isCreator;
+          privateKeyRef.current = storedKeyData.key;
 
-          if (joinerPublicKey) {
-            const peerKey = await importPublicKey(joinerPublicKey);
-            sharedKeyRef.current = await deriveSharedKey(existingPrivateKey, peerKey);
+          const peerPublicKey = storedKeyData.isCreator ? joinerPublicKey : creatorPublicKey;
+
+          if (peerPublicKey) {
+            const peerKey = await importPublicKey(peerPublicKey);
+            sharedKeyRef.current = await deriveSharedKey(storedKeyData.key, peerKey);
             setStatus("ready");
           } else {
             setStatus("waiting");
@@ -67,7 +69,7 @@ export function useE2EE({ roomId, username }: UseE2EEOptions) {
           isCreatorRef.current = false;
           const keyPair = await generateKeyPair();
           privateKeyRef.current = keyPair.privateKey;
-          storePrivateKey(roomId, keyPair.privateKey);
+          storePrivateKey(roomId, keyPair.privateKey, false);
           const myPublicKey = await exportPublicKey(keyPair.publicKey);
 
           if (creatorPublicKey) {
