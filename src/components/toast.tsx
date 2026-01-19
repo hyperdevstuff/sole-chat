@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type ToastType = "error" | "success" | "info" | "warning";
 
@@ -107,24 +108,28 @@ export function Toast({
           {message}
         </p>
         {action && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               action.onClick();
               handleDismiss();
             }}
-            className="mt-2 text-xs font-medium px-2 py-1 rounded bg-surface-elevated hover:bg-surface-elevated/80 text-foreground transition-colors"
+            className="mt-2 h-auto text-xs font-medium px-2 py-1 rounded bg-surface-elevated hover:bg-surface-elevated/80 text-foreground transition-colors"
           >
             {action.label}
-          </button>
+          </Button>
         )}
       </div>
 
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={handleDismiss}
-        className="shrink-0 rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-surface-elevated/50 focus:outline-none focus:ring-2 focus:ring-border text-muted"
+        className="shrink-0 h-auto rounded-md p-1 opacity-50 transition-opacity hover:opacity-100 hover:bg-surface-elevated/50 focus:outline-none focus:ring-2 focus:ring-border text-muted"
       >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
 
       <div className="absolute bottom-0 left-0 h-0.5 w-full bg-surface-elevated/20">
         <div
