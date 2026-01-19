@@ -11,6 +11,7 @@
 ### BUG: Room Full Redirect Crashes Server
 
 **Error in production:**
+
 ```
 TypeError: Invalid URL
 at new URL (node:internal/url:828:25)
@@ -54,6 +55,7 @@ input: '/?error=room-full'
 ### 1.2 Room Creation with TTL Selection
 
 - [x] Add TTL option constants (file: `src/lib/constants.ts`)
+
   ```typescript
   export const ROOM_TTL_OPTIONS = {
     '10m': 60 * 10,      // 600
@@ -221,6 +223,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 ## Completed (v1)
 
 ### Ship Blockers - FIXED
+
 - [x] Room ID shortened to 6 chars (commit: f065b5b)
 - [x] E2EE implemented with ECDH P-256 + AES-GCM (commit: 1d37d0f)
 - [x] E2EE tests added - 10 unit tests (commit: 9352263)
@@ -229,6 +232,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] .env.example created
 
 ### Theme Infrastructure - COMPLETE
+
 - [x] Migrated to next-themes (commit: e163fc0)
 - [x] CSS variables in globals.css (light + dark)
 - [x] Theme toggle component
@@ -237,6 +241,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] Theme toggle theme tokens migrated
 
 ### Component Migration - PARTIAL
+
 - [x] Home page uses shared Button/Input (commit: ec27066)
 - [x] Room page uses shared Button/Input (commit: 2326def)
 - [x] All modals use theme tokens (commit: 7154c01)
@@ -244,23 +249,27 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] DestructButton uses theme tokens (commit: 7154c01)
 
 ### Bug Fixes - COMPLETE
+
 - [x] ThemeToggle hydration mismatch
 - [x] Duplicate toasts on room creation
 - [x] Keep alive toast duration too short
 - [x] Typo "ablities" → "abilities"
 
 ### UX Features - COMPLETE
+
 - [x] Scroll position tracking with unread indicator (commit: aca2235)
 - [x] Conditional auto-scroll only when at bottom
 - [x] Floating "New Messages" badge with click-to-scroll
 
 ### Mobile Responsiveness - COMPLETE
+
 - [x] Header improvements (commit: 0778cc3)
 - [x] Safe area support for iOS
 - [x] Touch targets sized correctly
 - [x] Toast overflow fixes
 
 ### E2E Test Coverage - COMPLETE
+
 - [x] room-creation.spec.ts
 - [x] user-limit.spec.ts
 - [x] message-delivery.spec.ts
@@ -268,6 +277,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] Lua script unit tests (9 tests)
 
 ### Code Quality - COMPLETE
+
 - [x] Constants extracted to src/lib/constants.ts
 - [x] Silent catch blocks audited
 - [x] Debug logs removed
@@ -278,17 +288,20 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 ## Future Enhancements (v3+)
 
 ### Heartbeat System (Reliability)
+
 - [ ] Implement heartbeat for zombie connection detection
   - Current: beforeunload is unreliable (mobile/crash)
   - Solution: Periodic ping, server-side timeout tracking
   - Acceptance: Zombie slots freed within 60s
 
 ### Group E2EE
+
 - [ ] Implement group key distribution for 10-user E2EE
   - Research: Signal Protocol group messaging
   - Consider: MLS (Messaging Layer Security) standard
 
 ### Message Features
+
 - [ ] Message reactions
 - [ ] Image/file sharing (with E2EE)
 - [ ] Message editing/deletion
@@ -306,17 +319,20 @@ _None currently_
 ### E2EE with 10 Users (v2 Decision)
 
 Current 2-party implementation:
+
 1. Creator generates ECDH P-256 keypair, stores public key in Redis
 2. Joiner fetches creator's public key, generates own keypair
 3. Both derive shared secret via ECDH
 4. AES-GCM-256 encryption with shared key
 
 **v2 Approach**: Disable E2EE for group rooms (>2 users)
+
 - Show room type selector: "Private" vs "Group"
 - Private: 2 users max, E2EE enabled
 - Group: up to 10 users, no E2EE (messages still ephemeral)
 
 ### Room Configuration Model
+
 ```typescript
 type RoomConfig = {
   type: 'private' | 'group';
@@ -327,6 +343,7 @@ type RoomConfig = {
 ```
 
 ### TTL Extension Logic
+
 - Each extension adds `ROOM_TTL_SECONDS` (10 min) to current TTL
 - Max total room life: 7 days from creation
 - Extension blocked when: `age + currentTtl + 10min > 7 days`

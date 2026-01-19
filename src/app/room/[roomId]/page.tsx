@@ -294,7 +294,7 @@ const Page = () => {
         }
       }
     },
-    [router, username, isAtBottom, e2eeStatus, e2eeEnabled, decryptMessage, handleKeyExchange, toast],
+    [router, username, isAtBottom, e2eeStatus, e2eeEnabled, decryptMessage, handleKeyExchange],
   );
 
   const { status } = useRealtime({
@@ -587,13 +587,12 @@ const Page = () => {
             disabled={!canExtend || keepAliveInProgressRef.current}
             title={canExtend ? "Extend room by 10 minutes" : "Maximum 7 days reached"}
             aria-label={canExtend ? "Extend room duration" : "Cannot extend - maximum duration reached"}
-            className={`flex items-center gap-1 text-xs px-2 py-1.5 h-auto rounded border transition-all ${
-              !canExtend 
+            className={`flex items-center gap-1 text-xs px-2 py-1.5 h-auto rounded border transition-all ${!canExtend
                 ? "opacity-50 cursor-not-allowed border-border text-muted"
                 : extendSuccess
                   ? "border-green-500 text-green-500 bg-green-500/10"
                   : "border-border hover:border-green-500 text-muted hover:text-green-500"
-            }`}
+              }`}
           >
             {keepAliveInProgressRef.current ? (
               <Loader2 size={12} className="animate-spin" />
