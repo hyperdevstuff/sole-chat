@@ -89,6 +89,32 @@ For each task, note which tools to use:
 | Debug/inspect | Chrome DevTools MCP |
 | Find examples | Exa web search |
 
+## Phase 4: Theming Audit
+
+When planning UI tasks, check for theming violations:
+
+### Scan for Anti-Patterns
+```bash
+# Find hardcoded dark: variants in components
+grep -r "dark:" src/components/
+
+# Find hardcoded Tailwind colors
+grep -rE "(bg|text|border)-(red|green|blue|amber|yellow|zinc|neutral|gray)-[0-9]" src/components/
+```
+
+### For Each Violation Found
+1. Identify the semantic meaning (success, warning, danger, muted, etc.)
+2. Check if token exists in AGENTS.md THEMING section
+3. If missing, add task to create token in globals.css
+4. Add migration task for each file with violations
+
+### Theming Task Template
+```markdown
+- [ ] Migrate [file] to semantic tokens
+  - Line X: `[current]` → `[semantic token]`
+  - Acceptance: No `dark:` variants in file
+```
+
 ## Guardrails (999...)
 
 9991. **Capture the why** - Document reasoning for architectural decisions
@@ -96,6 +122,7 @@ For each task, note which tools to use:
 9993. **Keep plan current** - Update IMPLEMENTATION_PLAN.md with findings
 9994. **Identify acceptance tests** - Each task needs verification method
 9995. **Note UI tasks** - Mark tasks requiring frontend-ui-ux-engineer
+9996. **Audit theming** - Check for `dark:` variants, add migration tasks if found
 
 ## CRITICAL RULES
 

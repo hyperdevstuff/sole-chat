@@ -40,11 +40,26 @@ Delegate to frontend-ui-ux-engineer agent:
   - Match existing dark theme
   - Use TailwindCSS v4 patterns
   - Follow component patterns in src/components/
+  - **USE SEMANTIC TOKENS** - see AGENTS.md THEMING section
 - MUST NOT:
   - Change business logic
   - Add new dependencies without approval
   - Modify API endpoints
+  - **Use `dark:` variant** - add token to globals.css instead
+  - **Use hardcoded colors** (red-500, zinc-800, etc.)
 - CONTEXT: [relevant file paths, existing patterns]
+```
+
+**For Theming Work:**
+```
+1. Check AGENTS.md THEMING section for available tokens
+2. If token doesn't exist:
+   a. Add to :root in src/app/globals.css
+   b. Add dark override in .dark block
+   c. Map in @theme inline block
+3. Use semantic class: bg-{token}, text-{token}, border-{token}
+4. NEVER use dark: variant in components
+5. Verify: grep -r "dark:" src/components/ should return 0 results
 ```
 
 **For API/Logic Work:**
