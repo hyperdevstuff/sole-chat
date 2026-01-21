@@ -91,7 +91,7 @@ export function DestructButton({
         width="16"
         fill="currentColor"
         className="transition-opacity"
-        style={{ opacity: isHovering && !isHolding ? 0 : 1 }}
+        style={{ opacity: isHovering || isHolding ? 0 : 1 }}
       >
         <path
           fillRule="evenodd"
@@ -102,7 +102,7 @@ export function DestructButton({
 
       <span
         className="transition-opacity"
-        style={{ opacity: isHovering && !isHolding ? 0 : 1 }}
+        style={{ opacity: isHovering || isHolding ? 0 : 1 }}
       >
         <span
           className={
