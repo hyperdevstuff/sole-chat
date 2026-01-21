@@ -45,18 +45,16 @@ export function RoomStatus({
   };
 
   const status = getConnectionState();
-  const StatusIcon = status.icon;
 
   return (
     <div
       className="group flex h-10 items-center gap-3 rounded-full bg-surface-elevated px-5 py-2 font-medium text-sm text-foreground shadow-sm transition-all select-none border border-border/50 backdrop-blur-sm"
       role="status"
-      aria-label={`Status: ${status.label}, ${
-        isE2EE ? "Encrypted" : "Not Encrypted"
-      }, ${participantCount} of ${maxParticipants} participants`}
+      aria-label={`Status: ${status.label}, ${isE2EE ? "Encrypted" : "Not Encrypted"
+        }, ${participantCount} of ${maxParticipants} participants`}
     >
-      <div 
-        className="flex items-center gap-2" 
+      <div
+        className="flex items-center gap-2"
         title={status.label}
       >
         <div className="relative flex items-center justify-center">
@@ -72,9 +70,8 @@ export function RoomStatus({
       <div className="h-4 w-[1px] bg-border" aria-hidden="true" />
 
       <div
-        className={`flex items-center gap-1.5 transition-colors ${
-          isE2EE ? "text-accent" : "text-muted-foreground"
-        }`}
+        className={`flex items-center gap-1.5 transition-colors ${isE2EE ? "text-accent" : "text-muted-foreground"
+          }`}
         title={isE2EE ? "End-to-End Encrypted" : "Encryption Disabled"}
       >
         {isE2EE ? (
@@ -89,7 +86,7 @@ export function RoomStatus({
 
       <div className="h-4 w-[1px] bg-border" aria-hidden="true" />
 
-      <div 
+      <div
         className="flex items-center gap-1.5 text-muted-foreground"
         title="Participants"
       >

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useFocusTrap } from "../hooks/use-focus-trap";
+import { Button } from "@/components/ui/button";
 
 interface DestructModalProps {
   isOpen: boolean;
@@ -50,29 +51,32 @@ export function DestructModal({
         </p>
 
         <div className="flex flex-col gap-3">
-          <button
+          <Button
             onClick={onExportAndDestroy}
             aria-label="Export chat history and destroy room"
-            className="w-full py-2.5 px-4 bg-green-100 dark:bg-green-600/20 hover:bg-green-200 dark:hover:bg-green-600/30 border border-green-200 dark:border-green-600/40 text-green-700 dark:text-green-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            variant="success"
+            className="w-full"
           >
             Export & Destroy
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onJustDestroy}
             aria-label="Destroy room without exporting"
-            className="w-full py-2.5 px-4 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 border border-red-200 dark:border-red-600/40 text-red-700 dark:text-red-400 rounded-lg font-medium text-sm transition-colors cursor-pointer"
+            variant="danger-subtle"
+            className="w-full"
           >
             Just Destroy
-          </button>
+          </Button>
         </div>
 
-        <button
+        <Button
           onClick={onClose}
           aria-label="Cancel and return to chat"
-          className="w-full mt-4 py-2 text-muted hover:text-foreground text-sm transition-colors cursor-pointer"
+          variant="ghost"
+          className="w-full mt-4 text-muted hover:text-foreground"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 # Implementation Plan
 
-**Updated:** 2026-01-18 (v2 Planning)
+**Updated:** 2026-01-19 (E2EE Fix)
 **Branch:** dev
-**Last Commit:** f121eef fix: resolve all ship blockers (lint errors, typos, docs)
+**Last Commit:** (pending)
 
 ---
 
@@ -11,6 +11,7 @@
 ### BUG: Room Full Redirect Crashes Server
 
 **Error in production:**
+
 ```
 TypeError: Invalid URL
 at new URL (node:internal/url:828:25)
@@ -54,6 +55,7 @@ input: '/?error=room-full'
 ### 1.2 Room Creation with TTL Selection
 
 - [x] Add TTL option constants (file: `src/lib/constants.ts`)
+
   ```typescript
   export const ROOM_TTL_OPTIONS = {
     '10m': 60 * 10,      // 600
@@ -153,31 +155,68 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
   - Improved typography with uppercase tracking
   - File: `src/app/page.tsx`
 
+### 2.5 Theming Consolidation (Eliminate `dark:` variants)
+
+**Problem**: Mixed theming approaches - some components use semantic tokens, others use hardcoded `dark:` variants.
+
+- [x] Add missing semantic tokens to `globals.css`
+  - `--success`, `--success-foreground` (green button primary)
+  - `--success-subtle`, `--success-subtle-foreground` (green soft background)
+  - `--warning`, `--warning-foreground` (amber timer)
+  - `--warning-subtle`, `--warning-subtle-foreground` (amber soft background)
+  - `--danger-subtle`, `--danger-subtle-foreground` (red soft background)
+  - Map all in `@theme inline` block
+  - Acceptance: All tokens available as Tailwind classes
+
+- [x] Migrate `destruct-button.tsx` (4 `dark:` usages)
+  - Line 73: `bg-red-100 dark:bg-red-900` → `bg-danger-subtle`
+  - Line 73: `text-red-900 dark:text-red-400` → `text-danger-subtle-foreground`
+  - Lines 110-111: `text-red-600 dark:text-red-400` → `text-destructive`
+  - Line 111: `text-amber-600 dark:text-amber-400` → `text-warning`
+  - Line 122: `text-red-600 dark:text-red-400` → `text-destructive`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `destruct-modal.tsx` (2 `dark:` usages)
+  - Line 56: green button → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Line 63: red button → `bg-danger-subtle text-danger-subtle-foreground border-danger-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `expired-modal.tsx` (1 `dark:` usage)
+  - Line 53: green button → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Migrate `room/[roomId]/page.tsx` (1 `dark:` usage)
+  - Line 652: own message bubble → `bg-success-subtle text-success-subtle-foreground border-success-subtle-border`
+  - Acceptance: No `dark:` variants in file
+
+- [x] Verify theming consistency
+  - Run: `grep -r "dark:" src/components/` returns 0 results
+  - Test light mode visual appearance
+  - Test dark mode visual appearance
+  - Acceptance: Both modes look correct, no hardcoded colors
+
 ---
 
 ## Priority 3: Component Migration (Cleanup)
 
 ### Migrate Remaining Buttons to Shared Component
 
-- [ ] Migrate modal buttons (file: `src/components/destruct-modal.tsx`)
+- [x] Migrate modal buttons (file: `src/components/destruct-modal.tsx`)
   - "Export & Destroy" → `<Button variant="success">`
-  - "Just Destroy" → `<Button variant="danger">`
+  - "Just Destroy" → `<Button variant="danger-subtle">`
   - "Cancel" → `<Button variant="ghost">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+  - Added `success` and `danger-subtle` variants to Button component
 
-- [ ] Migrate expired modal buttons (file: `src/components/expired-modal.tsx`)
+- [x] Migrate expired modal buttons (file: `src/components/expired-modal.tsx`)
   - "Export Chat" → `<Button variant="success">`
   - "Create New Room" → `<Button variant="secondary">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
-- [ ] Migrate theme toggle (file: `src/components/theme-toggle.tsx`)
-  - Use `<Button variant="ghost">` wrapper
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
+- [x] Migrate theme toggle (file: `src/components/theme-toggle.tsx`)
+  - Uses `<Button variant="ghost" size="sm">` with custom className overrides
 
-- [ ] Migrate toast buttons (file: `src/components/toast.tsx`)
+- [x] Migrate toast buttons (file: `src/components/toast.tsx`)
   - Action button → `<Button variant="ghost" size="sm">`
   - Dismiss button → `<Button variant="ghost" size="sm">`
-  - **MUST USE**: `frontend-ui-ux-engineer` agent
 
 ---
 
@@ -221,14 +260,20 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 ## Completed (v1)
 
 ### Ship Blockers - FIXED
+
 - [x] Room ID shortened to 6 chars (commit: f065b5b)
 - [x] E2EE implemented with ECDH P-256 + AES-GCM (commit: 1d37d0f)
 - [x] E2EE tests added - 10 unit tests (commit: 9352263)
 - [x] ESLint errors fixed (commit: f121eef)
 - [x] README updated with project documentation
 - [x] .env.example created
+- [x] **E2EE Key Exchange Fix** - Added missing PUT handler to route.ts
+  - Root cause: PUT /api/rooms/:roomId/keys was returning 405 Method Not Allowed
+  - Fix: Added `export const PUT = App.handle;` to route.ts
+  - This allows joiner to store their public key, which triggers keyExchange event to creator
 
 ### Theme Infrastructure - COMPLETE
+
 - [x] Migrated to next-themes (commit: e163fc0)
 - [x] CSS variables in globals.css (light + dark)
 - [x] Theme toggle component
@@ -237,6 +282,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] Theme toggle theme tokens migrated
 
 ### Component Migration - PARTIAL
+
 - [x] Home page uses shared Button/Input (commit: ec27066)
 - [x] Room page uses shared Button/Input (commit: 2326def)
 - [x] All modals use theme tokens (commit: 7154c01)
@@ -244,23 +290,27 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] DestructButton uses theme tokens (commit: 7154c01)
 
 ### Bug Fixes - COMPLETE
+
 - [x] ThemeToggle hydration mismatch
 - [x] Duplicate toasts on room creation
 - [x] Keep alive toast duration too short
 - [x] Typo "ablities" → "abilities"
 
 ### UX Features - COMPLETE
+
 - [x] Scroll position tracking with unread indicator (commit: aca2235)
 - [x] Conditional auto-scroll only when at bottom
 - [x] Floating "New Messages" badge with click-to-scroll
 
 ### Mobile Responsiveness - COMPLETE
+
 - [x] Header improvements (commit: 0778cc3)
 - [x] Safe area support for iOS
 - [x] Touch targets sized correctly
 - [x] Toast overflow fixes
 
 ### E2E Test Coverage - COMPLETE
+
 - [x] room-creation.spec.ts
 - [x] user-limit.spec.ts
 - [x] message-delivery.spec.ts
@@ -268,6 +318,7 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 - [x] Lua script unit tests (9 tests)
 
 ### Code Quality - COMPLETE
+
 - [x] Constants extracted to src/lib/constants.ts
 - [x] Silent catch blocks audited
 - [x] Debug logs removed
@@ -278,17 +329,20 @@ Current: 23 toast calls. Target: ~10 (essential errors only).
 ## Future Enhancements (v3+)
 
 ### Heartbeat System (Reliability)
+
 - [ ] Implement heartbeat for zombie connection detection
   - Current: beforeunload is unreliable (mobile/crash)
   - Solution: Periodic ping, server-side timeout tracking
   - Acceptance: Zombie slots freed within 60s
 
 ### Group E2EE
+
 - [ ] Implement group key distribution for 10-user E2EE
   - Research: Signal Protocol group messaging
   - Consider: MLS (Messaging Layer Security) standard
 
 ### Message Features
+
 - [ ] Message reactions
 - [ ] Image/file sharing (with E2EE)
 - [ ] Message editing/deletion
@@ -306,17 +360,20 @@ _None currently_
 ### E2EE with 10 Users (v2 Decision)
 
 Current 2-party implementation:
+
 1. Creator generates ECDH P-256 keypair, stores public key in Redis
 2. Joiner fetches creator's public key, generates own keypair
 3. Both derive shared secret via ECDH
 4. AES-GCM-256 encryption with shared key
 
 **v2 Approach**: Disable E2EE for group rooms (>2 users)
+
 - Show room type selector: "Private" vs "Group"
 - Private: 2 users max, E2EE enabled
 - Group: up to 10 users, no E2EE (messages still ephemeral)
 
 ### Room Configuration Model
+
 ```typescript
 type RoomConfig = {
   type: 'private' | 'group';
@@ -327,6 +384,7 @@ type RoomConfig = {
 ```
 
 ### TTL Extension Logic
+
 - Each extension adds `ROOM_TTL_SECONDS` (10 min) to current TTL
 - Max total room life: 7 days from creation
 - Extension blocked when: `age + currentTtl + 10min > 7 days`
@@ -351,18 +409,31 @@ type RoomConfig = {
 
 ## CSS Variable Reference
 
-| Variable | Light | Dark | Usage |
-|----------|-------|------|-------|
-| `--background` | #ffffff | #0a0a0a | Page background |
-| `--foreground` | #171717 | #ededed | Primary text |
-| `--surface` | #f5f5f5 | #171717 | Card backgrounds |
-| `--surface-elevated` | #ffffff | #262626 | Buttons, modals |
-| `--surface-sunken` | #e5e5e5 | #0a0a0a | Input backgrounds |
-| `--border` | #e5e5e5 | #262626 | Default borders |
-| `--border-strong` | #d4d4d4 | #404040 | Emphasized borders |
-| `--muted` | #737373 | #a3a3a3 | Secondary text |
-| `--accent` | #22c55e | #22c55e | Green accent |
-| `--destructive` | #ef4444 | #dc2626 | Red/danger |
+| Token | Light | Dark | Tailwind Classes |
+|-------|-------|------|------------------|
+| `background` | #ffffff | #0a0a0a | `bg-background` |
+| `foreground` | #171717 | #ededed | `text-foreground` |
+| `surface` | #f5f5f5 | #171717 | `bg-surface` |
+| `surface-elevated` | #ffffff | #262626 | `bg-surface-elevated` |
+| `surface-sunken` | #e5e5e5 | #0a0a0a | `bg-surface-sunken` |
+| `border` | #e5e5e5 | #262626 | `border-border` |
+| `border-strong` | #d4d4d4 | #404040 | `border-border-strong` |
+| `muted` | #737373 | #a3a3a3 | `text-muted` |
+| `muted-foreground` | #a3a3a3 | #737373 | `text-muted-foreground` |
+| `accent` | #22c55e | #22c55e | `bg-accent text-accent-foreground` |
+| `accent-foreground` | #ffffff | #ffffff | `text-accent-foreground` |
+| `destructive` | #ef4444 | #dc2626 | `bg-destructive text-destructive-foreground` |
+| `destructive-foreground` | #ffffff | #ffffff | `text-destructive-foreground` |
+| `success` | #16a34a | #22c55e | `bg-success text-success-foreground` |
+| `success-foreground` | #ffffff | #ffffff | `text-success-foreground` |
+| `success-subtle` | #dcfce7 | rgba(34,197,94,0.2) | `bg-success-subtle text-success-subtle-foreground` |
+| `success-subtle-foreground` | #166534 | #4ade80 | `text-success-subtle-foreground` |
+| `warning` | #d97706 | #f59e0b | `text-warning` |
+| `warning-foreground` | #ffffff | #000000 | `text-warning-foreground` |
+| `warning-subtle` | #fef3c7 | rgba(245,158,11,0.2) | `bg-warning-subtle text-warning-subtle-foreground` |
+| `warning-subtle-foreground` | #92400e | #fbbf24 | `text-warning-subtle-foreground` |
+| `danger-subtle` | #fee2e2 | rgba(239,68,68,0.2) | `bg-danger-subtle text-danger-subtle-foreground` |
+| `danger-subtle-foreground` | #991b1b | #f87171 | `text-danger-subtle-foreground` |
 
 ---
 

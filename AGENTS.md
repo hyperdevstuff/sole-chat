@@ -69,6 +69,94 @@ src/
 - Hold-to-destroy UI pattern (2s hold time)
 - React Compiler enabled (`next.config.ts`)
 
+## THEMING
+
+### Architecture (Tailwind v4)
+
+```
+:root { --token: value }  →  .dark { --token: value }  →  @theme inline { --color-token: var(--token) }
+                                                                    ↓
+                                                          Use: bg-token, text-token, border-token
+```
+
+### Rules
+
+1. **NEVER use `dark:` variant** in components - add semantic token to `globals.css` instead
+2. **All colors via CSS variables** - no hardcoded Tailwind colors (`red-500`, `zinc-800`, etc.)
+3. **Use semantic names** - `bg-surface-elevated` not `bg-neutral-800`
+
+### Token Categories
+
+| Category | Tokens | Usage |
+|----------|--------|-------|
+| Layout | `background`, `foreground`, `surface`, `surface-elevated`, `surface-sunken` | Page/card backgrounds |
+| Borders | `border`, `border-strong` | Dividers, outlines |
+| Text | `muted`, `muted-foreground` | Secondary text |
+| Primary | `accent`, `accent-foreground` | Green accent (buttons, links) |
+| Danger | `destructive`, `destructive-foreground`, `danger-subtle`, `danger-subtle-foreground` | Red/error states |
+| Success | `success`, `success-foreground`, `success-subtle`, `success-subtle-foreground` | Green success states |
+| Warning | `warning`, `warning-foreground`, `warning-subtle`, `warning-subtle-foreground` | Amber warning states |
+
+### Adding New Tokens
+
+```css
+/* 1. Add to :root in globals.css */
+:root {
+  --my-token: #hexvalue;
+}
+
+/* 2. Add dark override in .dark */
+.dark {
+  --my-token: #dark-hexvalue;
+}
+
+/* 3. Map in @theme inline */
+@theme inline {
+  --color-my-token: var(--my-token);
+}
+```
+
+Then use: `bg-my-token`, `text-my-token`, `border-my-token`
+
+### Anti-Patterns
+
+```tsx
+// ❌ WRONG - hardcoded dark variant
+className="bg-green-100 dark:bg-green-600/20"
+
+// ✅ CORRECT - semantic token
+className="bg-success-subtle"
+
+// ❌ WRONG - raw Tailwind color
+className="text-neutral-400"
+
+// ✅ CORRECT - semantic token
+className="text-muted"
+
+// ❌ WRONG - hardcoded color with dark variant
+className="text-red-600 dark:text-red-400"
+
+// ✅ CORRECT - semantic token
+className="text-destructive"
+```
+
+### Quick Reference
+
+| Need | Use |
+|------|-----|
+| Page background | `bg-background` |
+| Card/modal background | `bg-surface-elevated` |
+| Input background | `bg-surface-sunken` |
+| Primary text | `text-foreground` |
+| Secondary text | `text-muted` |
+| Border | `border-border` |
+| Green button | `bg-accent text-accent-foreground` |
+| Red button | `bg-destructive text-destructive-foreground` |
+| Soft green bg | `bg-success-subtle text-success-subtle-foreground` |
+| Soft red bg | `bg-danger-subtle text-danger-subtle-foreground` |
+| Timer warning | `text-warning` |
+| Timer critical | `text-destructive` |
+
 ## COMMANDS
 
 ```bash

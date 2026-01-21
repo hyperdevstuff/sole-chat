@@ -55,12 +55,17 @@ export async function decrypt(base64: string, key: CryptoKey): Promise<string> {
   return new TextDecoder().decode(decrypted);
 }
 
-export function storePrivateKey(roomId: string, key: CryptoKey): void {
-  const keys = getKeyStore();
-  keys[roomId] = key;
+interface StoredKeyData {
+  key: CryptoKey;
+  isCreator: boolean;
 }
 
-export function getPrivateKey(roomId: string): CryptoKey | null {
+export function storePrivateKey(roomId: string, key: CryptoKey, isCreator: boolean): void {
+  const keys = getKeyStore();
+  keys[roomId] = { key, isCreator };
+}
+
+export function getPrivateKey(roomId: string): StoredKeyData | null {
   return getKeyStore()[roomId] ?? null;
 }
 
@@ -69,7 +74,7 @@ export function clearPrivateKey(roomId: string): void {
   delete keys[roomId];
 }
 
-const keyStore: Record<string, CryptoKey> = {};
-function getKeyStore(): Record<string, CryptoKey> {
+const keyStore: Record<string, StoredKeyData> = {};
+function getKeyStore(): Record<string, StoredKeyData> {
   return keyStore;
 }

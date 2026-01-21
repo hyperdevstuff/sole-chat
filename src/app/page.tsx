@@ -8,7 +8,7 @@ import { ROOM_TYPE_CONFIG, ROOM_TTL_OPTIONS, ROOM_TTL_LABELS, type RoomType, typ
 import { useMutation } from "@tanstack/react-query";
 import "nanoid";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, Users, Clock, Terminal, Shield, ArrowRight, Zap } from "lucide-react";
+import { Loader2, Lock, Users, Terminal, Shield, ArrowRight, Zap } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,27 +25,27 @@ function App() {
     mutationFn: async () => {
       let publicKey: string | undefined;
       let privateKey: CryptoKey | undefined;
-      
+
       if (roomType === "private") {
         const keyPair = await generateKeyPair();
         publicKey = await exportPublicKey(keyPair.publicKey);
         privateKey = keyPair.privateKey;
       }
-      
-      const res = await api.rooms.create.post({ 
-        publicKey, 
+
+      const res = await api.rooms.create.post({
+        publicKey,
         type: roomType,
         ttl: ROOM_TTL_OPTIONS[selectedTTL]
       });
       if (res.status === 200 && res.data?.roomId) {
         const newRoomId = res.data.roomId;
-        
+
         if (privateKey) {
-          storePrivateKey(newRoomId, privateKey);
+          storePrivateKey(newRoomId, privateKey, true);
         }
-        
+
         const roomUrl = `${window.location.origin}/room/${newRoomId}`;
-        
+
         await navigator.clipboard.writeText(roomUrl);
         router.push(`/room/${newRoomId}`);
       }
@@ -71,11 +71,11 @@ function App() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center p-4 bg-background text-foreground selection:bg-accent/20 selection:text-accent font-mono relative overflow-hidden">
-      
+
       <div className="fixed top-6 right-6 z-50">
         <ThemeToggle />
       </div>
-      
+
       <div className="w-full max-w-[440px] animate-fade-in z-10">
         <div className="mb-10 text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-sunken border border-border/50 backdrop-blur-sm">
@@ -85,7 +85,7 @@ function App() {
             </span>
             <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">System Online</span>
           </div>
-          
+
           <div className="space-y-1">
             <h1 className="text-4xl font-black tracking-tighter flex items-center justify-center gap-3">
               <span className="text-accent">sole</span>
@@ -128,7 +128,7 @@ function App() {
                   Connection Type
                 </label>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 {(["private", "group"] as const).map((type) => {
                   const config = ROOM_TYPE_CONFIG[type];
@@ -139,11 +139,10 @@ function App() {
                       key={type}
                       type="button"
                       onClick={() => setRoomType(type)}
-                      className={`relative flex flex-col items-start gap-2 p-3 border transition-all duration-200 group/btn ${
-                        isSelected
-                          ? "border-accent bg-accent/5 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.1)]"
-                          : "border-border bg-surface-elevated hover:border-accent/50 hover:bg-surface-sunken"
-                      }`}
+                      className={`relative flex flex-col items-start gap-2 p-3 border transition-all duration-200 group/btn ${isSelected
+                        ? "border-accent bg-accent/5 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.1)]"
+                        : "border-border bg-surface-elevated hover:border-accent/50 hover:bg-surface-sunken"
+                        }`}
                     >
                       <div className={`p-1.5 rounded-none ${isSelected ? "bg-accent text-accent-foreground" : "bg-surface-sunken text-muted-foreground group-hover/btn:text-foreground"}`}>
                         <Icon size={16} />
@@ -178,11 +177,10 @@ function App() {
                       key={key}
                       type="button"
                       onClick={() => setSelectedTTL(key)}
-                      className={`flex-1 py-3 text-xs font-bold transition-all duration-200 relative ${
-                        isSelected
-                          ? "text-accent bg-accent/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-surface-sunken"
-                      }`}
+                      className={`flex-1 py-3 text-xs font-bold transition-all duration-200 relative ${isSelected
+                        ? "text-accent bg-accent/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface-sunken"
+                        }`}
                     >
                       {ROOM_TTL_LABELS[key]}
                       {isSelected && (
